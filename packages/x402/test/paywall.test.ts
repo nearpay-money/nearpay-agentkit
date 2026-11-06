@@ -2,7 +2,7 @@
 import { buildTransferPayment, nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
 import { decodeX402Header, encodeX402Header, PaymentRequired, SettleResponse } from "@nearpay/spec";
 import { describe, expect, it, vi } from "vitest";
-import { createPaywall, type PaywallOptions, type PaywallResult } from "../src/index.js";
+import { createPaywall, facilitator, type PaywallOptions, type PaywallResult } from "../src/index.js";
 import { fakeFacilitator, SECRET_KEY, USDC } from "./fake-facilitator.js";
 
 const URL_ = "https://merchant.test/premium";
@@ -97,6 +97,68 @@ describe("createPaywall", () => {
     expect(fac.calls.filter((c) => c.route === "settle")).toHaveLength(1);
     t += 601_000; // forgotten after 10 min: the facilitator decides (here: consumed)
     expect(response(await pw(request({ "payment-signature": header })))).toMatchObject({ success: false });
+  });
+
+  it("delivers once per settlement across replicas: a replayed settle (spec 0.1.5) is refused", async () => {
+    // Two merchant replicas share the facilitator; its verify cache still says valid for the consumed binding.
+    const fac = fakeFacilitator({ cachedVerify: true });
+    const mk = (onSettled: PaywallOptions["onSettled"]) =>
+      createPaywall(
+        { amount: "10000" },
+        { secretKey: SECRET_KEY, apiBase: "https://api.test", fetch: fac.fetch, sleep: async () => {}, onSettled },
+      );
+    const settledA = vi.fn();
+    const settledB = vi.fn();
+    const a = mk(settledA);
+    const b = mk(settledB);
+    const first = await a(request());
+    if (first.paid) throw new Error("unexpected");
+    const required = PaymentRequired.parse(decodeX402Header(first.headers["PAYMENT-REQUIRED"] as string));
+    const accepted = required.accepts[0] as (typeof required.accepts)[0];
+    const signed = await buildTransferPayment(accepted, signer, { nonceSaltProvider: salt });
+    const header = encodeX402Header({ x402Version: 2, resource: required.resource, accepted, payload: { signed } });
+
+    expect((await a(request({ "payment-signature": header }))).paid).toBe(true);
+    const replay = await b(request({ "payment-signature": header }));
+    expect(replay).toMatchObject({ paid: false, status: 402 });
+    expect(response(replay)).toMatchObject({ success: false, errorReason: "requirement_consumed" });
+    expect(settledA).toHaveBeenCalledTimes(1);
+    expect(settledB).not.toHaveBeenCalled();
+    // replica B now remembers the binding and refuses further replays without calling the facilitator
+    const settles = fac.calls.filter((c) => c.route === "settle").length;
+    expect((await b(request({ "payment-signature": header }))).paid).toBe(false);
+    expect(fac.calls.filter((c) => c.route === "settle")).toHaveLength(settles);
+  });
+
+  it("without replayed (facilitators before spec 0.1.5) a second replica cannot tell the replay apart", async () => {
+    const fac = fakeFacilitator({ cachedVerify: true, legacy: true });
+    const mk = () =>
+      createPaywall({ amount: "10000" }, { secretKey: SECRET_KEY, apiBase: "https://api.test", fetch: fac.fetch });
+    const a = mk();
+    const b = mk();
+    const first = await a(request());
+    if (first.paid) throw new Error("unexpected");
+    const required = PaymentRequired.parse(decodeX402Header(first.headers["PAYMENT-REQUIRED"] as string));
+    const accepted = required.accepts[0] as (typeof required.accepts)[0];
+    expect(accepted.extra.deadline).toBeUndefined();
+    const signed = await buildTransferPayment(accepted, signer, { nonceSaltProvider: salt });
+    const header = encodeX402Header({ x402Version: 2, resource: required.resource, accepted, payload: { signed } });
+    expect((await a(request({ "payment-signature": header }))).paid).toBe(true);
+    expect((await b(request({ "payment-signature": header }))).paid).toBe(true);
+  });
+
+  it("delivers a settlement it started itself even when the retry after settlement_pending is flagged replayed", async () => {
+    const answers = [
+      { success: false, transaction: "", network: "near:mainnet" as const, errorReason: "settlement_pending" as const },
+      { success: true, transaction: "4Gk9abcdEFGH", network: "near:mainnet" as const, payer: "a.near", replayed: true },
+    ];
+    const real = facilitator({ secretKey: SECRET_KEY, apiBase: "https://api.test", fetch: fakeFacilitator().fetch });
+    const settle = vi.fn(async () => answers.shift() as (typeof answers)[number]);
+    const { pw } = setup({ facilitator: { ...real, settle } });
+    const r = await pay(pw);
+    expect(r.paid).toBe(true);
+    expect(response(r)).toMatchObject({ success: true, replayed: true });
+    expect(settle).toHaveBeenCalledTimes(2);
   });
 
   it("bounds the replay memory", async () => {

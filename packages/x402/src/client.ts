@@ -22,6 +22,7 @@ import {
   type PaymentRequirements as PaymentRequirementsT,
   ResourceInfo,
   SettleResponse,
+  safeParseTolerant,
   X402_VERSION,
   type z,
 } from "@nearpay/spec";
@@ -32,7 +33,21 @@ export interface WithX402Options extends Omit<BuildTransferOptions, "deadline"> 
   /** Only pay these merchant Intents accounts. */
   allowedPayTo?: readonly string[];
   /** Called after the paid retry returns (whatever its status). */
-  onPayment?: (e: { requirements: PaymentRequirementsT; payload: PaymentPayload; response: Response }) => void;
+  onPayment?: (e: X402PaymentEvent) => void;
+}
+
+/** What `onPayment` reports about one paid retry. */
+export interface X402PaymentEvent {
+  requirements: PaymentRequirementsT;
+  payload: PaymentPayload;
+  response: Response;
+  /** The decoded `PAYMENT-RESPONSE`, or null when absent or unreadable. */
+  settlement: z.output<typeof SettleResponse> | null;
+  /**
+   * The settlement repeats an earlier one for this payload (`SettleResponse.replayed`, spec 0.1.5):
+   * no new debit happened, so budgets and payment counters must not count it again.
+   */
+  replayed: boolean;
 }
 
 export class X402ClientError extends Error {
@@ -61,21 +76,24 @@ export function parsePaymentRequired(header: string | null): Required402 | null 
   }
   if (!v || typeof v !== "object") return null;
   const o = v as { x402Version?: unknown; resource?: unknown; accepts?: unknown };
-  const resource = ResourceInfo.safeParse(o.resource);
+  const resource = safeParseTolerant(ResourceInfo, o.resource);
   if (o.x402Version !== X402_VERSION || !resource.success || !Array.isArray(o.accepts)) return null;
   const accepts = o.accepts.flatMap((a) => {
-    const p = PaymentRequirements.safeParse(a);
+    const p = safeParseTolerant(PaymentRequirements, a);
     return p.success ? [p.data] : [];
   });
   return { resource: resource.data, accepts };
 }
 
-/** Decodes `PAYMENT-RESPONSE` of a paid (or refused) request. */
+/**
+ * Decodes `PAYMENT-RESPONSE` of a paid (or refused) request. Parsing is tolerant (spec 0.1.5): an
+ * `errorReason` this version does not know is kept as received instead of discarding the response.
+ */
 export function decodePaymentResponse(res: Response): z.output<typeof SettleResponse> | null {
   const h = res.headers.get(HEADERS.x402PaymentResponse);
   if (!h) return null;
   try {
-    const p = SettleResponse.safeParse(decodeX402Header(h));
+    const p = safeParseTolerant(SettleResponse, decodeX402Header(h));
     return p.success ? p.data : null;
   } catch {
     return null;
@@ -112,7 +130,10 @@ export function withX402(fetchImpl: typeof fetch, signer: IntentSigner, opts: Wi
     const response = original
       ? await fetchImpl(new Request(original, { headers }))
       : await fetchImpl(input, { ...init, headers });
-    opts.onPayment?.({ requirements, payload, response });
+    if (opts.onPayment) {
+      const settlement = decodePaymentResponse(response);
+      opts.onPayment({ requirements, payload, response, settlement, replayed: settlement?.replayed === true });
+    }
     return response;
   };
 }
