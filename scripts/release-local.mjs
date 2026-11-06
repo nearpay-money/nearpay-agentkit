@@ -11,7 +11,7 @@
  * Flags: --skip-verify   skip `pnpm verify` (callers that already verified; still builds)
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,6 +36,7 @@ function run(cmd, args, opts = {}) {
 function publishOrder() {
   const pkgs = new Map();
   for (const dir of readdirSync(join(root, "packages"))) {
+    if (!existsSync(join(root, "packages", dir, "package.json"))) continue; // placeholders (mcp: Stage 3)
     const json = JSON.parse(readFileSync(join(root, "packages", dir, "package.json"), "utf8"));
     if (json.private) continue;
     pkgs.set(json.name, { dir, json });
