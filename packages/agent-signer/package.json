@@ -1,0 +1,39 @@
+{
+  "name": "@nearpay/agent-signer",
+  "version": "0.1.0",
+  "description": "Sign NearPay NEAR Intents transfers for agents: NEP-413 and ERC-191 signers, MultiPayload builder, sentinel-verified checkout payments.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-package.mjs"
+  },
+  "dependencies": {
+    "@nearpay/spec": "0.1.4",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "bs58": "6.0.0",
+    "canonicalize": "5.1.0"
+  },
+  "peerDependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "zod": "4.6.7"
+  }
+}

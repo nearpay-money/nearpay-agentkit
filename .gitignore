@@ -12,3 +12,7 @@ coverage/
 .DS_Store
 .idea/
 .vscode/
+packages/*/dist/
+packages/*/LICENSE
+packages/*/tsconfig.build.json
+*.tgz
