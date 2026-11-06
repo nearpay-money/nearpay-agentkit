@@ -42,6 +42,7 @@ export {
   transferIntents,
   transferTerms,
   x402DeadlineSeconds,
+  x402LatestDeadline,
 } from "./payment.js";
 export {
   DEFAULT_NEAR_RPC_URLS,
