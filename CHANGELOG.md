@@ -9,7 +9,8 @@ and carry a migration note here (semver).
   (new `x402LatestDeadline`); requirements without it keep `now + floor(maxTimeoutSeconds / 2)`.
 - `@nearpay/x402` paywall: a settle answered with `replayed: true` (settled for an earlier request, e.g.
   by another replica) is refused with `402 requirement_consumed`, so the resource is delivered once per
-  settlement; the retry after the request's own `settlement_pending` still delivers.
+  settlement. This includes the retry after the request's own `settlement_pending`: pending answers never
+  claim the result, so a replayed retry means another request already got it.
 - `@nearpay/x402` client: `onPayment` also receives `settlement` (decoded `PAYMENT-RESPONSE`) and
   `replayed`, so a replay is not counted as a new payment.
 - Both packages parse API responses and x402 headers with `safeParseTolerant`: unknown open-enum values
