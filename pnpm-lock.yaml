@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@nearpay/spec': 0.1.4
+  '@nearpay/spec': 0.1.5
 
 importers:
 
@@ -18,8 +18,8 @@ importers:
         specifier: 0.1.2
         version: 0.1.2(@near-js/types@2.5.1)(@near-js/utils@2.5.1(@near-js/types@2.5.1))(zod@4.6.7)
       '@nearpay/spec':
-        specifier: 0.1.4
-        version: 0.1.4(zod@4.6.7)
+        specifier: 0.1.5
+        version: 0.1.5(zod@4.6.7)
       '@noble/curves':
         specifier: 2.4.0
         version: 2.4.0
@@ -66,8 +66,8 @@ importers:
   packages/agent-signer:
     dependencies:
       '@nearpay/spec':
-        specifier: 0.1.4
-        version: 0.1.4(zod@4.6.7)
+        specifier: 0.1.5
+        version: 0.1.5(zod@4.6.7)
       '@noble/curves':
         specifier: 2.4.0
         version: 2.4.0
@@ -91,8 +91,8 @@ importers:
         specifier: workspace:*
         version: link:../agent-signer
       '@nearpay/spec':
-        specifier: 0.1.4
-        version: 0.1.4(zod@4.6.7)
+        specifier: 0.1.5
+        version: 0.1.5(zod@4.6.7)
       hono:
         specifier: ^4.6.0
         version: 4.13.13
@@ -381,8 +381,8 @@ packages:
     peerDependencies:
       zod: ^4.6.7
 
-  '@nearpay/spec@0.1.4':
-    resolution: {integrity: sha512-XGwDLXWKb3Q/BC1RybRf0C0TVIllkuytmjzkpRucAp6yCmrGHZq0COOTqRbXIaJMhf6wbCgWDNiIQECdsa/qow==}
+  '@nearpay/spec@0.1.5':
+    resolution: {integrity: sha512-u6/g6kr3W7XbfCeE5x00vCwn1qw1W/Zk+4zzfDgnoT3Bn/shjAihYzlP2RQocJE3zuD6vlv7VvY3JAzpw1J3Mw==}
     engines: {node: '>=22.11.0'}
     peerDependencies:
       zod: ^4.6.7
@@ -1540,7 +1540,7 @@ snapshots:
     dependencies:
       '@near-js/crypto': 2.5.1(@near-js/types@2.5.1)(@near-js/utils@2.5.1(@near-js/types@2.5.1))
       '@near-js/transactions': 2.5.1(@near-js/crypto@2.5.1(@near-js/types@2.5.1)(@near-js/utils@2.5.1(@near-js/types@2.5.1)))(@near-js/types@2.5.1)(@near-js/utils@2.5.1(@near-js/types@2.5.1))
-      '@nearpay/spec': 0.1.4(zod@4.6.7)
+      '@nearpay/spec': 0.1.5(zod@4.6.7)
       '@noble/curves': 2.4.0
       '@noble/hashes': 2.4.0
       bs58: 6.0.0
@@ -1549,7 +1549,7 @@ snapshots:
       - '@near-js/types'
       - '@near-js/utils'
 
-  '@nearpay/spec@0.1.4(zod@4.6.7)':
+  '@nearpay/spec@0.1.5(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
