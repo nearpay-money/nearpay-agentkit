@@ -40,9 +40,15 @@ const { prepared, submission } = await payCheckoutSession(
 | `parsePinnedKeys(json)` / `PINNED_SENTINEL_KEYS`                              | Reads `sentinel_keys.json` (`[{kid, public_key}]`). The shipped set is empty in 0.1.x: sentinel keys are generated per stack in Stages 1–4, so operators pin theirs. Keys are never fetched from the API.  |
 | `enforceSpendPolicy` / `SpendLimit`                                           | Limits on amount + fee (base units, one value or per asset id) and allowed recipients.                                                                                                                     |
 
-**x402 deadlines.** x402 requirements carry no expiry, only `maxTimeoutSeconds` from issue, so payloads
-use half of that window (`x402DeadlineSeconds`) to stay inside the facilitator's
+**x402 deadlines.** Since spec 0.1.5 a requirement carries its absolute expiry `extra.deadline` (the
+binding's `expires_at`); payloads are signed with that deadline (`x402LatestDeadline`), at or before it
+whatever the local clock says. Requirements from older facilitators carry only `maxTimeoutSeconds` from
+issue, so payloads then use half of that window (`x402DeadlineSeconds`) to stay inside the facilitator's
 `(now + 5 s, issued_at + maxTimeoutSeconds]` range despite the 402 round trip and clock skew.
+
+**Tolerant parsing.** API responses are parsed with the spec's `safeParseTolerant`: a value of an open
+enum (an attempt status, a reason) newer than this version is kept, not refused. Sentinel attestations
+stay strictly validated (they contain no open enums) before their signature is checked.
 
 ## Tests
 

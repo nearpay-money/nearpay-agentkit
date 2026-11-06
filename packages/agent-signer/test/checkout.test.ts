@@ -109,6 +109,12 @@ describe("payCheckoutSession", () => {
     expect(api.calls.filter((c) => c.includes("attestations"))).toHaveLength(0);
   });
 
+  it("accepts an attempt status newer than the spec (tolerant parsing, spec 0.1.5)", async () => {
+    const api = fakeCheckoutApi({ now: NOW, attemptStatus: "teleporting" });
+    const r = await payCheckoutSession({ url }, signer, opts(api.fetch));
+    expect(r.submission.attempt.status).toBe("teleporting");
+  });
+
   it("surfaces API errors with their code", async () => {
     const api = fakeCheckoutApi({ now: NOW });
     const target = {

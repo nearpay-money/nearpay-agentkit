@@ -9,6 +9,7 @@ import {
   HEADERS,
   type RouteBody,
   type RouteResponse,
+  safeParseTolerant,
   x402Requirements,
   x402Settle,
   x402Supported,
@@ -95,7 +96,8 @@ export function facilitator(opts: FacilitatorOptions): Facilitator {
         env.success ? env.data.error.request_id : (res.headers.get(HEADERS.requestId) ?? undefined),
       );
     }
-    const parsed = (route.response as NonNullable<AnyRoute["response"]>).safeParse(json);
+    // Tolerant (spec 0.1.5): a new invalidReason / errorReason value is passed on, not a failed call.
+    const parsed = safeParseTolerant(route.response as NonNullable<AnyRoute["response"]>, json);
     if (!parsed.success) throw new FacilitatorError(`${route.id}: unexpected response body`, res.status);
     return parsed.data;
   }

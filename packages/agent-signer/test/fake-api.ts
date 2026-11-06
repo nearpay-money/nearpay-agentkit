@@ -29,6 +29,8 @@ export interface FakeOptions {
   attestRequirement?: (r: IntentsRequirement) => IntentsRequirement;
   /** Signs with this seed instead of the sentinel key. */
   signWith?: Uint8Array;
+  /** Attempt status in the agent_pay submission; a value newer than the spec skips strict validation. */
+  attemptStatus?: string;
   sentinelStatus?: number;
 }
 
@@ -122,28 +124,28 @@ export function fakeCheckoutApi(o: FakeOptions) {
       const r = verifySigned(signed);
       if (!r.ok) return error(400, "intent_invalid");
       submitted.push(signed);
-      return json(
-        202,
-        agentPay.response.parse({
-          object: "agent_pay_submission",
-          status: "submitted",
-          agent_payment: "ap_01jbz9k3m4n5p6q7r8s9t0v1w2",
-          attempt: {
-            id: ATTEMPT,
-            object: "payment_attempt",
-            livemode,
-            status: "settling",
-            method: "intents_transfer",
-            visible: true,
-            origin_asset_id: USDC,
-            deposit: null,
-            intents_requirement: requirement,
-            attestation_ticket: null,
-            failure_code: null,
-            refunded_amount: null,
-          },
-        }),
-      );
+      const submission = {
+        object: "agent_pay_submission",
+        status: "submitted",
+        agent_payment: "ap_01jbz9k3m4n5p6q7r8s9t0v1w2",
+        attempt: {
+          id: ATTEMPT,
+          object: "payment_attempt",
+          livemode,
+          status: "settling",
+          method: "intents_transfer",
+          visible: true,
+          origin_asset_id: USDC,
+          deposit: null,
+          intents_requirement: requirement,
+          attestation_ticket: null,
+          failure_code: null,
+          refunded_amount: null,
+        },
+      };
+      if (o.attemptStatus)
+        return json(202, { ...submission, attempt: { ...submission.attempt, status: o.attemptStatus } });
+      return json(202, agentPay.response.parse(submission));
     }
     return error(404, "resource_missing");
   }) as typeof globalThis.fetch;
