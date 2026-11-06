@@ -32,8 +32,9 @@ export const GET = withPaywall(
 - A replayed `PAYMENT-SIGNATURE` (binding already settled by this process, 10 min memory) → `402`
   `requirement_consumed`; settle upstream is idempotent, so this keeps one payment = one delivery.
   Across replicas (or after the 10 min) the facilitator flags the repeat with `SettleResponse.replayed`
-  (spec 0.1.5) and the paywall refuses it the same way, without running the handler or `onSettled`. The
-  one exception: the retry after this request's own `settlement_pending` completes its own settlement.
+  (spec 0.1.5) and the paywall refuses it the same way, without running the handler or `onSettled`. No
+  exception after this request's own `settlement_pending`: pending answers never claim the result, so a
+  replayed retry means another request (e.g. a second replica) already got it.
 - Facilitator unreachable or 5xx → `503` (`Retry-After: 1`); facilitator 4xx (e.g. `account_not_live`)
   → `500 payment_misconfigured`. `onError` receives the cause.
 - Options: `secretKey` (`sk_…` or `rk_…` with `agentpay.facilitate`), `apiBase` (default
