@@ -147,7 +147,7 @@ describe("createPaywall", () => {
     expect((await b(request({ "payment-signature": header }))).paid).toBe(true);
   });
 
-  it("delivers a settlement it started itself even when the retry after settlement_pending is flagged replayed", async () => {
+  it("refuses a replayed retry after settlement_pending (another request got the final result first)", async () => {
     const answers = [
       { success: false, transaction: "", network: "near:mainnet" as const, errorReason: "settlement_pending" as const },
       { success: true, transaction: "4Gk9abcdEFGH", network: "near:mainnet" as const, payer: "a.near", replayed: true },
@@ -156,8 +156,8 @@ describe("createPaywall", () => {
     const settle = vi.fn(async () => answers.shift() as (typeof answers)[number]);
     const { pw } = setup({ facilitator: { ...real, settle } });
     const r = await pay(pw);
-    expect(r.paid).toBe(true);
-    expect(response(r)).toMatchObject({ success: true, replayed: true });
+    expect(r.paid).toBe(false);
+    expect(response(r)).toMatchObject({ success: false, errorReason: "requirement_consumed" });
     expect(settle).toHaveBeenCalledTimes(2);
   });
 

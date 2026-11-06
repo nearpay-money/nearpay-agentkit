@@ -16,8 +16,9 @@
  * settling (in process, 10 min, bounded) and refuses them with `requirement_consumed`. Across replicas
  * (or after the 10 min) the facilitator flags the repeat with `SettleResponse.replayed` (spec 0.1.5):
  * a replayed success is refused the same way, so the resource is delivered once per settlement.
- * Exception: when this request's own first settle answered `settlement_pending`, the retry's result
- * completes that settlement and is delivered even if flagged `replayed`.
+ * No exception after `settlement_pending`: agentpay never marks the first final answer as replayed
+ * (pending answers do not claim the result), so a replayed retry means another request already got the
+ * final result, for example a second replica racing on the same payload.
  */
 import {
   BaseUnits,
@@ -205,15 +206,13 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
         return reject(settleFailure(verdict.invalidReason ?? "invalid_payload", verdict.invalidMessage, verdict.payer));
       }
       let s = await fac.settle(body);
-      let startedHere = false;
       if (!s.success && s.errorReason === "settlement_pending") {
-        startedHere = true;
         await sleep(opts.pendingRetryMs ?? 1000);
         s = await fac.settle(body);
       }
       if (!s.success) return reject(s);
       remember(binding);
-      if (s.replayed === true && !startedHere) {
+      if (s.replayed === true) {
         // Settled for an earlier request (another replica, or after the in-process memory expired).
         return reject(settleFailure("requirement_consumed", "this payment was already settled", s.payer));
       }
