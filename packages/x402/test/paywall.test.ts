@@ -77,6 +77,84 @@ describe("createPaywall", () => {
     // (settle is idempotent on the payload hash, the requirement is consumed)
   });
 
+  it("refuses a replayed PAYMENT-SIGNATURE (settle is idempotent upstream) and concurrent duplicates", async () => {
+    let t = 1_000_000;
+    const { fac, pw } = setup({ now: () => t });
+    const first = await pw(request());
+    if (first.paid) throw new Error("unexpected");
+    const required = PaymentRequired.parse(decodeX402Header(first.headers["PAYMENT-REQUIRED"] as string));
+    const accepted = required.accepts[0] as (typeof required.accepts)[0];
+    const signed = await buildTransferPayment(accepted, signer, { nonceSaltProvider: salt });
+    const header = encodeX402Header({ x402Version: 2, resource: required.resource, accepted, payload: { signed } });
+    const [a, b] = await Promise.all([
+      pw(request({ "payment-signature": header })),
+      pw(request({ "payment-signature": header })),
+    ]);
+    expect([a.paid, b.paid].sort()).toStrictEqual([false, true]);
+    const replay = await pw(request({ "payment-signature": header }));
+    expect(replay).toMatchObject({ paid: false, status: 402 });
+    expect(response(replay)).toMatchObject({ errorReason: "requirement_consumed" });
+    expect(fac.calls.filter((c) => c.route === "settle")).toHaveLength(1);
+    t += 601_000; // forgotten after 10 min: the facilitator decides (here: consumed)
+    expect(response(await pw(request({ "payment-signature": header })))).toMatchObject({ success: false });
+  });
+
+  it("bounds the replay memory", async () => {
+    let t = 0;
+    const settle = vi.fn(async () => ({
+      success: true,
+      transaction: "4Gk9abcdEFGH",
+      network: "near:mainnet" as const,
+      payer: "a.near",
+    }));
+    const pw2 = createPaywall(
+      { amount: "1" },
+      {
+        secretKey: SECRET_KEY,
+        now: () => t,
+        facilitator: {
+          requirements: vi.fn(),
+          verify: async () => ({ isValid: true, payer: "a.near" }),
+          settle,
+          supported: vi.fn(),
+        },
+      },
+    );
+    const header = (i: number) =>
+      encodeX402Header({
+        x402Version: 2,
+        accepted: {
+          scheme: "exact",
+          network: "near:mainnet",
+          amount: "1",
+          asset: USDC,
+          payTo: "m.near",
+          maxTimeoutSeconds: 60,
+          extra: {
+            assetTransferMethod: "intents-transfer",
+            paymentFlow: "authorization",
+            fee: { to: "treasury.nearpay.near", amount: "0" },
+            binding: `np1:${String(i).replace(/0/g, "z").padStart(44, "A")}`,
+            verifyingContract: "intents.near",
+          },
+        },
+        payload: {
+          signed: {
+            standard: "raw_ed25519",
+            payload: "{}",
+            public_key: `ed25519:${"1".repeat(44)}`,
+            signature: `ed25519:${"1".repeat(88)}`,
+          },
+        },
+      });
+    for (let i = 0; i < 10_001; i++) {
+      if (i === 5_000) t = 700_000; // first half expired by the time the map fills
+      await pw2(request({ "payment-signature": header(i) }));
+    }
+    expect(settle).toHaveBeenCalledTimes(10_001);
+    expect((await pw2(request({ "payment-signature": header(10_000) }))).paid).toBe(false);
+  });
+
   it("retries a pending settlement once after 1 s", async () => {
     const { pw, sleep } = setup({}, { pendingSettles: 1 });
     const r = await pay(pw);

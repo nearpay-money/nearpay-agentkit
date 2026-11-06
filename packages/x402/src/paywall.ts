@@ -10,6 +10,11 @@
  * Local checks (defence in depth, the facilitator re-checks everything): the payload must pay this
  * paywall's amount (and asset / payTo / window when configured), and name this resource if it names one.
  * The payload is forwarded with `resource` set to this paywall's resource URL.
+ *
+ * Replay guard: the facilitator's settle is idempotent on the payload hash (agentpay §7), so a replayed
+ * `PAYMENT-SIGNATURE` would get `success` again. The paywall remembers bindings it settled or is
+ * settling (in process, 10 min, bounded) and refuses them with `requirement_consumed`. Multi-replica
+ * merchants also rely on the facilitator (see brain notes: settle should flag replays).
  */
 import {
   BaseUnits,
@@ -66,7 +71,11 @@ export interface PaywallOptions extends FacilitatorOptions {
   /** For tests: replaces the facilitator client. */
   facilitator?: Facilitator;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }
+
+const REPLAY_TTL_MS = 600_000;
+const REPLAY_MAX = 10_000;
 
 export type PaywallResult =
   | { paid: false; status: number; headers: Record<string, string>; body: unknown }
@@ -99,6 +108,18 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
   }
   const fac = opts.facilitator ?? facilitator(opts);
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const now = opts.now ?? Date.now;
+  const settledBindings = new Map<string, number>(); // binding → forget after (ms)
+  const inflight = new Set<string>();
+  const remember = (binding: string) => {
+    const t = now();
+    if (settledBindings.size >= REPLAY_MAX) {
+      for (const [b, until] of settledBindings) if (until <= t) settledBindings.delete(b);
+      while (settledBindings.size >= REPLAY_MAX) settledBindings.delete(settledBindings.keys().next().value as string);
+    }
+    settledBindings.set(binding, t + REPLAY_TTL_MS);
+  };
+  const seen = (binding: string) => inflight.has(binding) || (settledBindings.get(binding) ?? 0) > now();
 
   const reject = (s: SettleResponseT): PaywallResult => ({
     paid: false,
@@ -166,12 +187,15 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
     if (mismatch) {
       return reject(settleFailure("invalid_payment_requirements", `the payment's ${mismatch} is not this resource's`));
     }
+    const binding = a.extra.binding;
+    if (seen(binding)) return reject(settleFailure("requirement_consumed", "this payment was already used"));
     const body = {
       x402Version: X402_VERSION,
       paymentPayload: { ...payment, resource: { ...payment.resource, ...resource } },
       paymentRequirements: a,
     };
 
+    inflight.add(binding);
     try {
       const verdict = await fac.verify(body);
       if (!verdict.isValid) {
@@ -183,6 +207,7 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
         s = await fac.settle(body);
       }
       if (!s.success) return reject(s);
+      remember(binding);
       const paid: PaidRequest = {
         payer: s.payer ?? verdict.payer ?? "",
         settlement: s,
@@ -193,6 +218,8 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
       return { paid: true, headers: { [HEADERS.x402PaymentResponse]: encodeX402Header(s) }, ...paid };
     } catch (e) {
       return unavailable(e);
+    } finally {
+      inflight.delete(binding);
     }
   };
 }

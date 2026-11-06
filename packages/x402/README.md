@@ -29,6 +29,8 @@ export const GET = withPaywall(
   `POST /x402/verify` → invalid: `402` + `PAYMENT-RESPONSE` failure; valid → `POST /x402/settle` →
   success: the handler runs and the response carries `PAYMENT-RESPONSE: base64(SettleResponse)`;
   `settlement_pending` → one retry after 1 s, then `402` with the pending response.
+- A replayed `PAYMENT-SIGNATURE` (binding already settled by this process, 10 min memory) → `402`
+  `requirement_consumed`; settle upstream is idempotent, so this keeps one payment = one delivery.
 - Facilitator unreachable or 5xx → `503` (`Retry-After: 1`); facilitator 4xx (e.g. `account_not_live`)
   → `500 payment_misconfigured`. `onError` receives the cause.
 - Options: `secretKey` (`sk_…` or `rk_…` with `agentpay.facilitate`), `apiBase` (default

@@ -3,6 +3,13 @@
 `@nearpay/x402` and `@nearpay/agent-signer` share one version. Breaking changes bump the major version
 and carry a migration note here (semver).
 
+## 0.1.1 — Stage 1, step 1.3
+
+- `@nearpay/x402`: the paywall refuses a replayed `PAYMENT-SIGNATURE` (`402`, `requirement_consumed`)
+  for bindings it settled or is settling (in process, 10 min, bounded). The facilitator's settle is
+  idempotent on the payload hash, so without this one payment could unlock a resource repeatedly.
+  `PaywallOptions.now` added (tests). No API change.
+
 ## 0.1.0 — Stage 1, step 1.3
 
 - `@nearpay/agent-signer`: `nearSigner` (NEP-413, raw Ed25519), `evmSigner` (ERC-191, viem-style
