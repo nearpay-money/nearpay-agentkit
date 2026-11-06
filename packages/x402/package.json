@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@nearpay/agent-signer": "workspace:*",
-    "@nearpay/spec": "0.1.4"
+    "@nearpay/spec": "0.1.5"
   },
   "peerDependencies": {
     "hono": "^4.6.0",

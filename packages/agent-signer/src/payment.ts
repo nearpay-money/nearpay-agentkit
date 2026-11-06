@@ -48,12 +48,29 @@ export interface BuildTransferOptions {
 let defaultSalt: SaltProvider | null = null;
 
 /**
- * Deadline of an x402 payload: requirements carry no expiry, only `maxTimeoutSeconds` from issue
- * (agentpay §3: deadline ≤ issued_at + maxTimeoutSeconds). Half the window leaves room for the
- * 402 round trip and clock skew while staying above the facilitator's 5 s floor (window ≥ 30 s).
+ * Fallback deadline window of an x402 payload, for requirements without `extra.deadline` (facilitators
+ * older than spec 0.1.5): only `maxTimeoutSeconds` from issue is known (agentpay §3: deadline ≤
+ * issued_at + maxTimeoutSeconds). Half the window leaves room for the 402 round trip and clock skew
+ * while staying above the facilitator's 5 s floor (window ≥ 30 s).
  */
 export function x402DeadlineSeconds(maxTimeoutSeconds: number): number {
   return Math.floor(maxTimeoutSeconds / 2);
+}
+
+/**
+ * Latest Verifier deadline an x402 requirement allows: its absolute expiry `extra.deadline` (spec 0.1.5,
+ * the binding's `expires_at`) when present, signed as is (at or before it, independent of this clock);
+ * otherwise `now + x402DeadlineSeconds(maxTimeoutSeconds)`.
+ */
+export function x402LatestDeadline(r: PaymentRequirementsT, now: number = Date.now()): string {
+  const abs = r.extra.deadline;
+  if (abs !== undefined) {
+    // Date keeps milliseconds: a finer RFC 3339 fraction is truncated, so the result never exceeds it.
+    const t = Date.parse(abs);
+    if (!Number.isFinite(t)) throw new AgentSignerError("invalid_requirements", `extra.deadline is not a time: ${abs}`);
+    return new Date(t).toISOString();
+  }
+  return new Date(now + x402DeadlineSeconds(r.maxTimeoutSeconds) * 1000).toISOString();
 }
 
 /** Validates a requirement and returns the transfer it asks for. */
@@ -75,7 +92,7 @@ export function transferTerms(req: TransferRequirements, now: number = Date.now(
       feeTo: r.extra.fee.to,
       feeAmount: r.extra.fee.amount,
       binding: r.extra.binding,
-      latestDeadline: new Date(now + x402DeadlineSeconds(r.maxTimeoutSeconds) * 1000).toISOString(),
+      latestDeadline: x402LatestDeadline(r, now),
     });
   }
   const p = IntentsRequirement.safeParse(req);

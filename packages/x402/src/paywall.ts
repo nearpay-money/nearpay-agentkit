@@ -13,8 +13,12 @@
  *
  * Replay guard: the facilitator's settle is idempotent on the payload hash (agentpay §7), so a replayed
  * `PAYMENT-SIGNATURE` would get `success` again. The paywall remembers bindings it settled or is
- * settling (in process, 10 min, bounded) and refuses them with `requirement_consumed`. Multi-replica
- * merchants also rely on the facilitator (see brain notes: settle should flag replays).
+ * settling (in process, 10 min, bounded) and refuses them with `requirement_consumed`. Across replicas
+ * (or after the 10 min) the facilitator flags the repeat with `SettleResponse.replayed` (spec 0.1.5):
+ * a replayed success is refused the same way, so the resource is delivered once per settlement.
+ * No exception after `settlement_pending`: agentpay never marks the first final answer as replayed
+ * (pending answers do not claim the result), so a replayed retry means another request already got the
+ * final result, for example a second replica racing on the same payload.
  */
 import {
   BaseUnits,
@@ -208,6 +212,10 @@ export function createPaywall(config: PaywallConfig, opts: PaywallOptions): Payw
       }
       if (!s.success) return reject(s);
       remember(binding);
+      if (s.replayed === true) {
+        // Settled for an earlier request (another replica, or after the in-process memory expired).
+        return reject(settleFailure("requirement_consumed", "this payment was already settled", s.payer));
+      }
       const paid: PaidRequest = {
         payer: s.payer ?? verdict.payer ?? "",
         settlement: s,

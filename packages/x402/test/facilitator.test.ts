@@ -23,6 +23,24 @@ describe("facilitator client", () => {
     expect(req.headers.get("nearpay-version")).toBe("2026-11-01");
   });
 
+  it("passes unknown open-enum values through (tolerant parsing, spec 0.1.5)", async () => {
+    const answer = (body: unknown) =>
+      facilitator({ secretKey: "sk_test_x", fetch: (async () => Response.json(body)) as typeof fetch });
+    const verify = { x402Version: 2 } as never;
+    expect(await answer({ isValid: false, invalidReason: "moon_phase" }).verify(verify)).toStrictEqual({
+      isValid: false,
+      invalidReason: "moon_phase",
+    });
+    const settled = await answer({
+      success: false,
+      transaction: "",
+      network: "near:mainnet",
+      errorReason: "solar_flare",
+    }).settle(verify);
+    expect(settled.errorReason).toBe("solar_flare");
+    await expect(answer({ isValid: "maybe" }).verify(verify)).rejects.toThrow(/unexpected response/);
+  });
+
   it("raises FacilitatorError with status, code and request id", async () => {
     const err = (status: number, body: string, headers: Record<string, string> = {}) =>
       facilitator({

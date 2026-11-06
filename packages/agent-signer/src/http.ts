@@ -1,5 +1,5 @@
 /** Minimal client for the public payer/sentinel routes this package calls, driven by the spec route tables. */
-import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS } from "@nearpay/spec";
+import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS, safeParseTolerant } from "@nearpay/spec";
 import { AgentSignerError } from "./errors.js";
 
 export interface CallOptions {
@@ -72,7 +72,8 @@ export async function callRoute(route: AnyRoute, o: CallOptions): Promise<{ data
     );
   }
   if (!route.response) return { data: undefined, json };
-  const parsed = route.response.safeParse(json);
+  // Tolerant (spec 0.1.5): unknown values of open enums (statuses, reasons) are kept, not refused.
+  const parsed = safeParseTolerant(route.response, json);
   if (!parsed.success) {
     throw new ApiCallError(`${route.id}: unexpected response body`, res.status, undefined, undefined);
   }

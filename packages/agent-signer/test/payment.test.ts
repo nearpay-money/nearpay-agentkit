@@ -10,6 +10,7 @@ import {
   staticSaltProvider,
   transferTerms,
   x402DeadlineSeconds,
+  x402LatestDeadline,
 } from "../src/index.js";
 import { hexBytes, vector } from "./support.js";
 
@@ -44,7 +45,7 @@ const signer = nearSigner({ keyPair: hexBytes(v.raw_ed25519.seed_hex) });
 const base = { nonceSaltProvider: staticSaltProvider("252812b3"), now: () => NOW };
 
 describe("transferTerms", () => {
-  it("reads x402 requirements: deadline is half the settlement window", () => {
+  it("reads x402 requirements without extra.deadline: deadline is half the settlement window (fallback)", () => {
     const t = transferTerms(x402, NOW);
     expect(t).toMatchObject({
       kind: "x402",
@@ -55,6 +56,25 @@ describe("transferTerms", () => {
     });
     expect(Date.parse(t.latestDeadline) - NOW).toBe(60_000);
     expect(x402DeadlineSeconds(30)).toBe(15);
+  });
+
+  it("reads x402 requirements with extra.deadline (spec 0.1.5): signs at it, not from maxTimeoutSeconds", () => {
+    const withDeadline = { ...x402, extra: { ...x402.extra, deadline: "2026-11-06T12:01:45.000Z" } };
+    expect(transferTerms(withDeadline, NOW).latestDeadline).toBe("2026-11-06T12:01:45.000Z");
+    // independent of the local clock: a clock 90 s behind still signs the issued expiry
+    expect(transferTerms(withDeadline, NOW - 90_000).latestDeadline).toBe("2026-11-06T12:01:45.000Z");
+    // a window shorter than half of maxTimeoutSeconds is honoured too
+    const soon = { ...x402, extra: { ...x402.extra, deadline: "2026-11-06T12:00:20Z" } };
+    expect(transferTerms(soon, NOW).latestDeadline).toBe("2026-11-06T12:00:20.000Z");
+  });
+
+  it("never signs past extra.deadline: sub-millisecond fractions are truncated, garbage refused", () => {
+    const fine = { ...x402, extra: { ...x402.extra, deadline: "2026-11-06T12:01:45.123999Z" } };
+    expect(x402LatestDeadline(fine, NOW)).toBe("2026-11-06T12:01:45.123Z");
+    const bad = { ...x402, extra: { ...x402.extra, deadline: "soon" } };
+    expect(() => x402LatestDeadline(bad, NOW)).toThrow(/extra.deadline/);
+    expect(() => transferTerms(bad, NOW)).toThrow(AgentSignerError);
+    expect(x402LatestDeadline(x402, NOW)).toBe("2026-11-06T12:01:00.000Z");
   });
 
   it("reads checkout requirements with their own deadline", () => {
@@ -104,6 +124,20 @@ describe("buildTransferMessage / buildTransferPayment", () => {
     for (const deadline of ["2026-11-06T12:03:00Z", "2026-11-06T11:59:00Z", "garbage"]) {
       await expect(buildTransferMessage(checkout, signer.signerId, { ...base, deadline })).rejects.toThrow(/deadline/);
     }
+  });
+
+  it("signs an x402 Verifier deadline equal to extra.deadline, and refuses one past it", async () => {
+    const req = { ...x402, extra: { ...x402.extra, deadline: "2026-11-06T12:01:50Z" } };
+    const m = await buildTransferMessage(req, signer.signerId, base);
+    expect(m.deadline).toBe("2026-11-06T12:01:50.000Z");
+    const r = verifySigned(await buildTransferPayment(req, signer, base));
+    expect(r.ok && r.message.deadline).toBe("2026-11-06T12:01:50.000Z");
+    await expect(
+      buildTransferMessage(req, signer.signerId, { ...base, deadline: "2026-11-06T12:01:51Z" }),
+    ).rejects.toThrow(/at most 2026-11-06T12:01:50.000Z/);
+    await expect(
+      buildTransferMessage(req, signer.signerId, { ...base, now: () => Date.parse("2026-11-06T12:01:50Z") }),
+    ).rejects.toThrow(/passed/);
   });
 
   it("refuses an expired checkout requirement", async () => {

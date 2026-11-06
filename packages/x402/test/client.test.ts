@@ -1,6 +1,7 @@
 /** `withX402` behaviour in isolation (scripted servers). */
 import { nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
 import { decodeX402Header, encodeX402Header, PaymentPayload } from "@nearpay/spec";
+import { verifySigned } from "@nearpay-internal/intents";
 import { describe, expect, it, vi } from "vitest";
 import { decodePaymentResponse, parsePaymentRequired, withX402, X402ClientError } from "../src/index.js";
 import { USDC } from "./fake-facilitator.js";
@@ -34,8 +35,10 @@ const required = (accepts: unknown[]) =>
   encodeX402Header({ x402Version: 2, resource: { url: "https://shop.test/premium" }, accepts });
 const opts = { maxAmountPerRequest: 10_030, nonceSaltProvider: staticSaltProvider("252812b3") };
 
+const settled = { success: true, transaction: "4Gk9abcdEFGH", network: "near:mainnet", payer: signer.signerId };
+
 /** A server that answers 402 until it sees PAYMENT-SIGNATURE. */
-function server(accepts: unknown[] = [requirement]) {
+function server(accepts: unknown[] = [requirement], settlement: Record<string, unknown> = settled) {
   const seen: Request[] = [];
   const f = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const req = input instanceof Request ? input : new Request(String(input), init);
@@ -46,12 +49,7 @@ function server(accepts: unknown[] = [requirement]) {
     return new Response("paid", {
       status: 200,
       headers: {
-        "PAYMENT-RESPONSE": encodeX402Header({
-          success: true,
-          transaction: "4Gk9abcdEFGH",
-          network: "near:mainnet",
-          payer: signer.signerId,
-        }),
+        "PAYMENT-RESPONSE": encodeX402Header(settlement),
       },
     });
   });
@@ -77,7 +75,42 @@ describe("withX402", () => {
     expect(payload.accepted).toStrictEqual(requirement);
     expect(payload.resource).toStrictEqual({ url: "https://shop.test/premium" });
     expect(onPayment).toHaveBeenCalledOnce();
+    expect(onPayment.mock.calls[0]?.[0]).toMatchObject({ settlement: settled, replayed: false });
     expect(decodePaymentResponse(r)?.transaction).toBe("4Gk9abcdEFGH");
+  });
+
+  it("signs the Verifier deadline at extra.deadline when the requirement carries it (spec 0.1.5)", async () => {
+    const deadline = new Date(Date.now() + 90_000).toISOString();
+    const withDeadline = { ...requirement, extra: { ...requirement.extra, deadline } };
+    const s = server([withDeadline]);
+    expect((await withX402(s.f, signer, opts)("https://shop.test/premium")).status).toBe(200);
+    const payload = PaymentPayload.parse(
+      decodeX402Header((s.seen[1] as Request).headers.get("payment-signature") as string),
+    );
+    const v = verifySigned(payload.payload.signed);
+    expect(v.ok && v.message.deadline).toBe(deadline);
+    expect(payload.accepted.extra.deadline).toBe(deadline);
+  });
+
+  it("falls back to half of maxTimeoutSeconds without extra.deadline", async () => {
+    const s = server();
+    const before = Date.now();
+    await withX402(s.f, signer, opts)("https://shop.test/premium");
+    const payload = PaymentPayload.parse(
+      decodeX402Header((s.seen[1] as Request).headers.get("payment-signature") as string),
+    );
+    const v = verifySigned(payload.payload.signed);
+    const signedAt = v.ok ? Date.parse(v.message.deadline) : Number.NaN;
+    expect(signedAt).toBeGreaterThanOrEqual(before + 60_000 - 1);
+    expect(signedAt).toBeLessThanOrEqual(Date.now() + 60_000);
+  });
+
+  it("reports a replayed settlement to onPayment so it is not counted as a new payment", async () => {
+    const s = server([requirement], { ...settled, replayed: true });
+    const onPayment = vi.fn();
+    const r = await withX402(s.f, signer, { ...opts, onPayment })("https://shop.test/premium");
+    expect(r.status).toBe(200);
+    expect(onPayment.mock.calls[0]?.[0]).toMatchObject({ replayed: true, settlement: { replayed: true } });
   });
 
   it("replays Request objects with their body", async () => {
@@ -139,6 +172,13 @@ describe("header helpers", () => {
       parsePaymentRequired(encodeX402Header({ x402Version: 1, resource: { url: "https://a.b" }, accepts: [] })),
     ).toBeNull();
     expect(parsePaymentRequired(required([requirement]))?.accepts).toHaveLength(1);
+  });
+
+  it("parses tolerantly: unknown open-enum values are kept (spec 0.1.5), closed ones still refused", () => {
+    const failure = { success: false, transaction: "", network: "near:mainnet", errorReason: "solar_flare" };
+    const h = (v: unknown) => new Response("", { headers: { "PAYMENT-RESPONSE": encodeX402Header(v) } });
+    expect(decodePaymentResponse(h(failure))?.errorReason).toBe("solar_flare");
+    expect(decodePaymentResponse(h({ ...failure, network: "near:testnet" }))).toBeNull();
   });
 
   it("decodePaymentResponse tolerates garbage", () => {

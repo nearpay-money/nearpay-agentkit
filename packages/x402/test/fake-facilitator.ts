@@ -27,6 +27,10 @@ export interface FakeFacilitatorOptions {
   pendingSettles?: number;
   /** Force an HTTP status for a route (e.g. `{ requirements: 503 }`). */
   failWith?: Partial<Record<"requirements" | "verify" | "settle", number>>;
+  /** Behave like a facilitator older than spec 0.1.5: no `extra.deadline`, no `replayed`. */
+  legacy?: boolean;
+  /** Verify answers valid for a consumed binding (agentpay caches verify results for 60 s). */
+  cachedVerify?: boolean;
 }
 
 function parse<T>(schema: { parse(v: unknown): T } | undefined, v: unknown): T {
@@ -131,6 +135,7 @@ export function fakeFacilitator(o: FakeFacilitatorOptions = {}) {
           fee: { to: "treasury.nearpay.near", amount: fee },
           binding,
           verifyingContract: "intents.near",
+          ...(o.legacy ? {} : { deadline: new Date(expiresAt).toISOString() }),
         },
       };
       issued.set(binding, { req, resourceUrl: b.resource.url, expiresAt, consumed: false });
@@ -140,7 +145,8 @@ export function fakeFacilitator(o: FakeFacilitatorOptions = {}) {
       const b = parse(x402Verify.body, body);
       const c = check(b);
       const item = issued.get(b.paymentRequirements.extra.binding);
-      if (c.ok && item?.consumed) return json(200, { isValid: false, invalidReason: "requirement_consumed" });
+      if (c.ok && item?.consumed && !o.cachedVerify)
+        return json(200, { isValid: false, invalidReason: "requirement_consumed" });
       return json(
         200,
         x402Verify.response.parse(
@@ -162,6 +168,7 @@ export function fakeFacilitator(o: FakeFacilitatorOptions = {}) {
           network: "near:mainnet",
           payer: c.payer,
           amount: b.paymentRequirements.amount,
+          ...(o.legacy ? {} : { replayed: true }),
         });
       if (!c.ok) return json(200, { success: false, transaction: "", network: "near:mainnet", errorReason: c.reason });
       const item = issued.get(c.binding) as Issued;

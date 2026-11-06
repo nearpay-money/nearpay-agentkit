@@ -3,6 +3,18 @@
 `@nearpay/x402` and `@nearpay/agent-signer` share one version. Breaking changes bump the major version
 and carry a migration note here (semver).
 
+## Unreleased — Stage 1, step 1.4 (`@nearpay/spec` 0.1.5)
+
+- `@nearpay/agent-signer`: x402 payloads are signed with the requirement's `extra.deadline` when present
+  (new `x402LatestDeadline`); requirements without it keep `now + floor(maxTimeoutSeconds / 2)`.
+- `@nearpay/x402` paywall: a settle answered with `replayed: true` (settled for an earlier request, e.g.
+  by another replica) is refused with `402 requirement_consumed`, so the resource is delivered once per
+  settlement; the retry after the request's own `settlement_pending` still delivers.
+- `@nearpay/x402` client: `onPayment` also receives `settlement` (decoded `PAYMENT-RESPONSE`) and
+  `replayed`, so a replay is not counted as a new payment.
+- Both packages parse API responses and x402 headers with `safeParseTolerant`: unknown open-enum values
+  are kept instead of failing the call.
+
 ## 0.1.1 — Stage 1, step 1.3
 
 - `@nearpay/x402`: the paywall refuses a replayed `PAYMENT-SIGNATURE` (`402`, `requirement_consumed`)
