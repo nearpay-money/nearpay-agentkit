@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Publishes @nearpay/agent-signer and @nearpay/x402 to the local registry (Verdaccio in the
+ * Publishes @nearpay/agent-signer, @nearpay/x402 and @nearpay/mcp to the local registry (Verdaccio in the
  * nearpay-deploy Compose stack, system audit S-11), in dependency order, as reproducible tarballs
  * (see `stage`; same procedure as nearpay-kit's release script). Idempotent: a version already
  * published with identical contents is skipped; different contents under the same version fail (bump it).
@@ -36,7 +36,7 @@ function run(cmd, args, opts = {}) {
 function publishOrder() {
   const pkgs = new Map();
   for (const dir of readdirSync(join(root, "packages"))) {
-    if (!existsSync(join(root, "packages", dir, "package.json"))) continue; // placeholders (mcp: Stage 3)
+    if (!existsSync(join(root, "packages", dir, "package.json"))) continue; // not a package
     const json = JSON.parse(readFileSync(join(root, "packages", dir, "package.json"), "utf8"));
     if (json.private) continue;
     pkgs.set(json.name, { dir, json });

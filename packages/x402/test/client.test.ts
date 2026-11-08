@@ -189,3 +189,84 @@ describe("header helpers", () => {
     ).toBeNull();
   });
 });
+
+describe("withX402 budget and parsing", () => {
+  it("commits the debit of a settled payment and releases a definite refusal", async () => {
+    const { SpendingBudget } = await import("@nearpay/agent-signer");
+    const budget = new SpendingBudget({ perCall: 20_000, perSession: 30_000 });
+    const ok = server();
+    expect((await withX402(ok.f, signer, { ...opts, budget })("https://shop.test/premium")).status).toBe(200);
+    expect(budget.usage(USDC).committed).toBe(10_030n);
+    const refused = server([requirement], {
+      success: false,
+      transaction: "",
+      network: "near:mainnet",
+      errorReason: "insufficient_balance",
+    });
+    const f402 = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const r = await refused.f(input, init);
+      return r.status === 200 ? new Response("{}", { status: 402, headers: r.headers }) : r;
+    }) as unknown as typeof fetch;
+    expect((await withX402(f402, signer, { ...opts, budget })("https://shop.test/premium")).status).toBe(402);
+    expect(budget.usage(USDC)).toMatchObject({ committed: 10_030n, reserved: 0n });
+    // a pending answer counts as spent (the payment may still execute)
+    const pending = server([requirement], {
+      success: false,
+      transaction: "",
+      network: "near:mainnet",
+      errorReason: "settlement_pending",
+    });
+    const fp = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const r = await pending.f(input, init);
+      return r.status === 200 ? new Response("{}", { status: 402, headers: r.headers }) : r;
+    }) as unknown as typeof fetch;
+    await withX402(fp, signer, { ...opts, budget })("https://shop.test/premium");
+    expect(budget.usage(USDC).committed).toBe(20_060n);
+    // session limit reached: refused before signing
+    await expect(withX402(ok.f, signer, { ...opts, budget })("https://shop.test/premium")).rejects.toThrow(
+      /session limit/,
+    );
+  });
+  it("commits when the paid retry fails in transport, releases when signing fails", async () => {
+    const { SpendingBudget } = await import("@nearpay/agent-signer");
+    const budget = new SpendingBudget({ perCall: 20_000, perSession: 100_000 });
+    let n = 0;
+    const flaky = (async () => {
+      if (n++ === 0)
+        return new Response("{}", { status: 402, headers: { "PAYMENT-REQUIRED": required([requirement]) } });
+      throw new TypeError("socket hang up");
+    }) as unknown as typeof fetch;
+    await expect(withX402(flaky, signer, { ...opts, budget })("https://shop.test/premium")).rejects.toThrow(/hang up/);
+    expect(budget.usage(USDC).committed).toBe(10_030n);
+    const badSigner = { ...signer, sign: async () => Promise.reject(new Error("hsm offline")) };
+    await expect(withX402(server().f, badSigner, { ...opts, budget })("https://shop.test/premium")).rejects.toThrow(
+      /hsm/,
+    );
+    expect(budget.usage(USDC)).toMatchObject({ committed: 10_030n, reserved: 0n });
+  });
+  it("parses near-intents entries next to intents-transfer ones and skips broken ones", () => {
+    const ni = {
+      scheme: "exact",
+      network: "eip155:8453",
+      amount: "",
+      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      payTo: "",
+      maxTimeoutSeconds: 1800,
+      extra: {
+        assetTransferMethod: "near-intents",
+        paymentFlow: "upfront",
+        destination: { network: "near:mainnet", asset: USDC, amount: "1", recipient: "merchant.near" },
+      },
+    };
+    const p = parsePaymentRequired(required([requirement, ni, { ...ni, extra: { ...ni.extra, destination: null } }]));
+    expect(p?.accepts).toHaveLength(1);
+    expect(p?.nearIntents).toHaveLength(1);
+    expect(withX402).toBeTypeOf("function");
+  });
+  it("hands back a 402 without NearPay entries untouched when there is no signer", async () => {
+    const s = server();
+    const r = await withX402(s.f, null, opts)("https://shop.test/premium");
+    expect(r.status).toBe(402);
+    expect(s.seen).toHaveLength(1);
+  });
+});

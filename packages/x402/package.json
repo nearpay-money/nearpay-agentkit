@@ -1,7 +1,7 @@
 {
   "name": "@nearpay/x402",
-  "version": "0.1.1",
-  "description": "NearPay x402: paywall middleware for Express, Hono and fetch handlers (Next.js), and an agent fetch client that pays with NEAR Intents.",
+  "version": "0.2.0",
+  "description": "NearPay x402: paywall middleware for Express, Hono and fetch handlers (Next.js), and an agent fetch client that pays with NEAR Intents (intents-transfer) or cross-chain (near-intents).",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@nearpay/agent-signer": "workspace:*",
-    "@nearpay/spec": "0.1.5"
+    "@nearpay/spec": "0.3.0"
   },
   "peerDependencies": {
     "hono": "^4.6.0",

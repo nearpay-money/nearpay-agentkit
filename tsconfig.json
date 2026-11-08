@@ -6,7 +6,8 @@
     "paths": {
       "@nearpay/agent-signer": ["./packages/agent-signer/src/index.ts"],
       "@nearpay/x402": ["./packages/x402/src/index.ts"],
-      "@nearpay/x402/hono": ["./packages/x402/src/hono.ts"]
+      "@nearpay/x402/hono": ["./packages/x402/src/hono.ts"],
+      "@nearpay/mcp": ["./packages/mcp/src/index.ts"]
     }
   },
   "include": [

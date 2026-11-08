@@ -2,7 +2,7 @@
  * Express (and Connect-style) middleware: `app.get("/premium", paywall({amount: "10000"}, {secretKey}), handler)`.
  * The paid request carries the settlement in `res.locals.x402` and the response gets `PAYMENT-RESPONSE`.
  */
-import { createPaywall, type PaidRequest, type PaywallConfig, type PaywallOptions } from "./paywall.js";
+import { createPaywall, type PaywallConfig, type PaywallOptions, paidRequestOf } from "./paywall.js";
 
 /** The parts of an Express request the paywall reads. */
 export interface ExpressLikeRequest {
@@ -36,8 +36,7 @@ export function paywall(config: PaywallConfig, opts: PaywallOptions) {
         return;
       }
       res.set(out.headers);
-      const { payer, settlement, payment, resource } = out;
-      res.locals.x402 = { payer, settlement, payment, resource } satisfies PaidRequest;
+      res.locals.x402 = paidRequestOf(out);
       next();
     } catch (e) {
       next(e);

@@ -15,9 +15,11 @@ import {
   agentPay,
   agentPayRequirements,
   createDepositInstructionsAttestation,
+  getPublicCheckoutSession,
   HEADERS,
   type IntentsRequirement,
   type MultiPayload,
+  type PublicCheckoutSession,
   type SignedAttestation,
   type z,
 } from "@nearpay/spec";
@@ -63,7 +65,7 @@ export function parseCheckoutUrl(url: string, apiBase?: string): CheckoutSession
   return { sessionId: path[1] as string, clientSecret: secret, apiBase: apiBase ?? `${u.origin}/api` };
 }
 
-function resolveTarget(t: CheckoutTarget): CheckoutSessionRef {
+export function resolveTarget(t: CheckoutTarget): CheckoutSessionRef {
   if ("url" in t) return parseCheckoutUrl(t.url, t.apiBase);
   const m = CLIENT_SECRET_RE.exec(t.clientSecret);
   if (!m || m[1] !== t.sessionId)
@@ -181,7 +183,45 @@ export async function prepareCheckoutPayment(
 export interface CheckoutPaymentResult {
   prepared: PreparedCheckoutPayment;
   /** `agent_pay_submission`: the payload was queued for relay; success arrives via the session. */
-  submission: { status: "submitted"; agent_payment: string; attempt: { id: string; status: string } };
+  submission: CheckoutSubmission;
+}
+
+export type CheckoutSubmission = {
+  status: "submitted";
+  agent_payment: string;
+  attempt: { id: string; status: string };
+};
+
+type HttpOptions = Pick<CheckoutPaymentOptions, "fetch" | "timeoutMs">;
+
+const httpOf = (ref: CheckoutSessionRef, o: HttpOptions) => ({
+  base: ref.apiBase,
+  ...(o.fetch ? { fetch: o.fetch } : {}),
+  ...(o.timeoutMs ? { timeoutMs: o.timeoutMs } : {}),
+});
+
+/**
+ * Submits a prepared payment (`POST …/agent_pay {signed}`). A thrown `ApiCallError` with a 4xx status
+ * means agentpay refused it before queueing anything (lld/agentpay.md §5); status 0 or 5xx leaves the
+ * outcome unknown (the payload may have been queued).
+ */
+export async function submitCheckoutPayment(
+  target: CheckoutTarget,
+  prepared: PreparedCheckoutPayment,
+  opts: HttpOptions = {},
+): Promise<CheckoutSubmission> {
+  const ref = resolveTarget(target);
+  if (ref.sessionId !== prepared.sessionId) {
+    throw new AgentSignerError("invalid_requirements", "prepared payment belongs to another session");
+  }
+  return (
+    await callRoute(agentPay, {
+      ...httpOf(ref, opts),
+      params: { id: ref.sessionId },
+      headers: { [HEADERS.clientSecret]: ref.clientSecret },
+      body: { signed: prepared.signed },
+    })
+  ).data as CheckoutSubmission;
 }
 
 /** Prepares (verified + signed) and submits an agent payment for a checkout session. */
@@ -192,15 +232,54 @@ export async function payCheckoutSession(
 ): Promise<CheckoutPaymentResult> {
   const ref = resolveTarget(target);
   const prepared = await prepareCheckoutPayment(ref, signer, opts);
-  const submission = (
-    await callRoute(agentPay, {
-      base: ref.apiBase,
-      ...(opts.fetch ? { fetch: opts.fetch } : {}),
-      ...(opts.timeoutMs ? { timeoutMs: opts.timeoutMs } : {}),
-      params: { id: ref.sessionId },
-      headers: { [HEADERS.clientSecret]: ref.clientSecret },
-      body: { signed: prepared.signed },
-    })
-  ).data as CheckoutPaymentResult["submission"];
+  const submission = await submitCheckoutPayment(ref, prepared, opts);
   return { prepared, submission };
+}
+
+export type PublicCheckoutSessionT = z.output<typeof PublicCheckoutSession>;
+
+/** Session states after which nothing more happens to the agent's payment. */
+export function isCheckoutOutcomeFinal(s: PublicCheckoutSessionT): boolean {
+  const attempt = s.attempt?.status;
+  return (
+    s.status === "complete" ||
+    s.status === "expired" ||
+    ["succeeded", "canceled", "expired", "requires_review"].includes(s.intent_status) ||
+    (attempt !== undefined && ["succeeded", "refunded", "failed", "expired_unpaid"].includes(attempt))
+  );
+}
+
+export interface WaitForCheckoutOptions extends HttpOptions {
+  /** Give up after this long (default 60 s); the session is returned as last seen. */
+  waitMs?: number;
+  /** Poll interval (default 2 s). */
+  pollMs?: number;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+}
+
+/**
+ * Reads the session as the payer sees it until the payment reaches a final state or `waitMs` passes
+ * (`getPublicCheckoutSession`). Reading never changes anything.
+ */
+export async function waitForCheckoutOutcome(
+  target: CheckoutTarget,
+  opts: WaitForCheckoutOptions = {},
+): Promise<{ session: PublicCheckoutSessionT; final: boolean }> {
+  const ref = resolveTarget(target);
+  const now = opts.now ?? Date.now;
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const until = now() + (opts.waitMs ?? 60_000);
+  for (;;) {
+    const session = (
+      await callRoute(getPublicCheckoutSession, {
+        ...httpOf(ref, opts),
+        params: { id: ref.sessionId },
+        headers: { [HEADERS.clientSecret]: ref.clientSecret },
+      })
+    ).data as PublicCheckoutSessionT;
+    const final = isCheckoutOutcomeFinal(session);
+    if (final || now() >= until) return { session, final };
+    await sleep(Math.min(opts.pollMs ?? 2_000, Math.max(0, until - now())));
+  }
 }

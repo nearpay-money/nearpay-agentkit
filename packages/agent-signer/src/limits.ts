@@ -20,7 +20,8 @@ export interface SpendPolicy {
   allowedPayTo?: readonly string[];
 }
 
-function toBig(a: Amount, what: string): bigint {
+/** Parses a non-negative integer amount (bigint, safe integer or decimal base-units string). */
+export function toBaseUnits(a: Amount, what: string): bigint {
   if (typeof a === "number" && !Number.isSafeInteger(a)) throw new RangeError(`${what} must be an integer`);
   if (typeof a === "string" && !/^(0|[1-9][0-9]*)$/.test(a)) throw new RangeError(`${what} must be base units`);
   const v = BigInt(a);
@@ -32,9 +33,9 @@ function toBig(a: Amount, what: string): bigint {
 export function limitFor(limit: SpendLimit, asset: string): bigint | null {
   if (typeof limit === "object") {
     const v = Object.hasOwn(limit, asset) ? limit[asset] : undefined;
-    return v === undefined ? null : toBig(v, `limit for ${asset}`);
+    return v === undefined ? null : toBaseUnits(v, `limit for ${asset}`);
   }
-  return toBig(limit, "limit");
+  return toBaseUnits(limit, "limit");
 }
 
 /** Throws unless the payment is within the policy. Returns the total debit. */

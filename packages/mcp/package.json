@@ -1,0 +1,48 @@
+{
+  "name": "@nearpay/mcp",
+  "version": "0.2.0",
+  "description": "NearPay MCP server for agents: merchant tools (checkout sessions, payment intents) and payer tools (checkout and invoice payments, x402 incl. cross-chain near-intents) with spend limits and a merchant allow-list.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "nearpay-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-package.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@nearpay/agent-signer": "workspace:*",
+    "@nearpay/spec": "0.3.0",
+    "@nearpay/x402": "workspace:*"
+  },
+  "peerDependencies": {
+    "zod": "^4.6.7",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "zod": "4.6.7",
+    "viem": "2.57.7"
+  },
+  "peerDependenciesMeta": {
+    "viem": {
+      "optional": true
+    }
+  }
+}

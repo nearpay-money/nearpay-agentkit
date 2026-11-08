@@ -3,7 +3,7 @@
  * The paid request carries the settlement in `c.get("x402")`; the response gets `PAYMENT-RESPONSE`.
  */
 import type { MiddlewareHandler } from "hono";
-import { createPaywall, type PaidRequest, type PaywallConfig, type PaywallOptions } from "./paywall.js";
+import { createPaywall, type PaidRequest, type PaywallConfig, type PaywallOptions, paidRequestOf } from "./paywall.js";
 
 export type { PaidRequest, PaywallConfig, PaywallOptions } from "./paywall.js";
 
@@ -20,8 +20,7 @@ export function honoPaywall(
         headers: { "content-type": "application/json", ...out.headers },
       });
     }
-    const { payer, settlement, payment, resource } = out;
-    c.set("x402", { payer, settlement, payment, resource });
+    c.set("x402", paidRequestOf(out));
     await next();
     for (const [k, v] of Object.entries(out.headers)) c.res.headers.set(k, v);
   };
