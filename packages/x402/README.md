@@ -1,7 +1,8 @@
 # @nearpay/x402
 
-NearPay's x402 profile (`exact` + `intents-transfer` on `near:mainnet`) for merchants and agents
-(`nearpay-brain/lld/sdks-and-tools.md` §2, `lld/agentpay.md` §3).
+NearPay's x402 profile for merchants and agents (`nearpay-brain/lld/sdks-and-tools.md` §2): `exact` +
+`intents-transfer` on `near:mainnet` (`lld/agentpay.md` §3) and, since 0.2.0, cross-chain `exact` +
+`near-intents` (x402 PR #3370 wire shapes, `lld/agentpay.md` §3.1).
 
 ## Merchants: put a price on a route
 
@@ -40,6 +41,30 @@ export const GET = withPaywall(
 - Options: `secretKey` (`sk_…` or `rk_…` with `agentpay.facilitate`), `apiBase` (default
   `https://api.nearpay.money`), `resourceUrl` (string or function; set it behind proxies), `onSettled`.
 
+### Cross-chain (`near-intents`, 0.2.0)
+
+```ts
+paywall(
+  {
+    amount: "10000",
+    origins: [{ asset_id: "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near" }], // 1–20
+    // includeIntentsTransfer: true (default), quoteWindowSeconds: 300 (30–900)
+  },
+  { secretKey },
+);
+```
+
+With `origins` the 402 comes from `POST /x402/near-intents/requirements` and lists the `intents-transfer`
+entry plus one **unquoted** `near-intents` entry per origin. A `quote` payload → `POST
+/x402/near-intents/verify` → a second `402` whose `PAYMENT-REQUIRED` holds the quoted entry (deposit
+address, amount, `operationToken`, `refundDeadline`); a quote never serves the resource. A `deposit`
+payload → `POST /x402/near-intents/settle` → the handler runs only on `success: true` (the merchant was
+paid exactly `amount`); `settlement_pending` → `402` with the pending `PAYMENT-RESPONSE` (cross-chain
+delivery takes minutes; the client retries). The facilitator always gets the paywall's own unquoted
+entry (remembered per binding; on another replica the locally checked `accepted` entry). Repeats of a
+settled operation → `402 exact_near_intents_operation_executed`. `paymentOf(req)` / `res.locals.x402` /
+`c.get("x402")` carry `method: "intents-transfer" | "near-intents"`.
+
 ## Agents: pay on 402
 
 ```ts
@@ -62,6 +87,32 @@ The Verifier deadline is the requirement's `extra.deadline` (spec 0.1.5) when pr
 runs after the paid retry; `replayed: true` means the merchant repeated an earlier settlement of this
 payload, so it is not a new debit. Responses and headers are parsed tolerantly: an open-enum value newer
 than this version (e.g. an `errorReason`) is kept as received.
+
+### Cross-chain payments (`crossChain`, 0.2.0)
+
+```ts
+import { withX402, evmDepositor, resumeX402Operation } from "@nearpay/x402";
+import { SpendingBudget, rpcIntentsBalanceProvider } from "@nearpay/agent-signer";
+
+const pay = withX402(fetch, signer /* or null */, {
+  maxAmountPerRequest: { [BASE_USDC]: "1100000", [USDC]: "1100000" }, // origin units for near-intents
+  allowedPayTo: ["merchant.near"], // the merchant Intents account (destination.recipient)
+  budget: new SpendingBudget({ perCall, perSession }),
+  crossChain: {
+    originSigner: evmDepositor({ "eip155:8453": viemWalletClient }), // or your own OriginSigner
+    store, // durable OperationStore (default: memory)
+    balance: rpcIntentsBalanceProvider(), // prefer intents-transfer when the balance covers it
+  },
+});
+```
+
+Order: quote → `checkQuotedEntry` (same binding, network, asset, window, destination; a deposit address,
+operation token and ≥ 2 min before `refundDeadline`) → spend limits and budget on the **quoted** amount
+→ persist the operation → deposit → persist the `txHash` → retry the deposit payload until a final
+result (5 s → 30 s backoff, until `refundDeadline` + 24 h or `maxWaitMs`). An open operation blocks a
+second quote for the same resource; `X402ClientError` `settlement_pending` / `deposit_unknown` carry
+the `operationId` for `resumeX402Operation`, which never deposits again. `DepositNotSentError` from an
+origin signer releases the budget; any other deposit failure counts as spent.
 
 Tests: every adapter runs the full agent → merchant → facilitator loop against a spec-validated fake
 facilitator that verifies payloads with the Verifier code agentpay uses; the sandbox E2E lives in

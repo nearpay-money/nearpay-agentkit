@@ -1,6 +1,6 @@
 {
   "name": "@nearpay/agent-signer",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Sign NearPay NEAR Intents transfers for agents: NEP-413 and ERC-191 signers, MultiPayload builder, sentinel-verified checkout payments.",
   "license": "Apache-2.0",
   "type": "module",

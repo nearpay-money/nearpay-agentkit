@@ -1,9 +1,39 @@
 # Changelog
 
-`@nearpay/x402` and `@nearpay/agent-signer` share one version. Breaking changes bump the major version
-and carry a migration note here (semver).
+`@nearpay/x402`, `@nearpay/agent-signer` and `@nearpay/mcp` share one version. Breaking changes bump the
+major version and carry a migration note here (semver).
 
-## Unreleased — Stage 1, step 1.4 (`@nearpay/spec` 0.1.5)
+## 0.2.0 — Stage 3, step 3.3 (`@nearpay/spec` 0.3.0)
+
+Includes the step 1.4 changes below (never released on their own). `@nearpay/spec` 0.1.5 → 0.3.0.
+
+- **`@nearpay/mcp` (new).** MCP server, stdio and streamable HTTP (`nearpay-mcp [--http]`). Merchant
+  tools `nearpay_create_checkout_session`, `nearpay_get_payment_intent`, `nearpay_list_payments`; payer
+  tools `nearpay_pay_checkout_session` (checkout and hosted-invoice URLs), `nearpay_fetch_paid` (x402,
+  incl. cross-chain), `nearpay_resume_paid_fetch`, `nearpay_get_spending`. NEP-413 signing with the
+  operator's local key; required merchant allow-list; per-call and per-session limits (default 1.00 /
+  10.00 of known stablecoins, other assets refused); evidence links on every payment; secrets redacted
+  from logs and results; HTTP locked to a bearer token, loopback and a Host allow-list.
+- **`@nearpay/x402` cross-chain (`exact` + `near-intents`, x402 PR #3370 shapes).** Paywall option
+  `origins` (+ `includeIntentsTransfer`, `quoteWindowSeconds`) issues through
+  `/x402/near-intents/requirements` and serves quote → second 402 → deposit → settle; client option
+  `crossChain` (`originSigner`, `refundTo`, `origins`, `store`, `balance`, `maxWaitMs`) quotes, checks the
+  quoted entry, limits the quoted amount, persists the operation, deposits and redeems with backoff;
+  `resumeX402Operation`, `checkQuotedEntry`, `evmDepositor`, `memoryOperationStore`,
+  `decodeNearIntentsPaymentResponse`. `withX402` accepts `signer: null` (cross-chain only) and a
+  `budget` (`SpendingBudget`).
+- **`@nearpay/agent-signer`.** `payInvoice` / `openInvoiceSession` / `parseInvoiceUrl` /
+  `parsePaymentUrl` (FR-AGT-05: `/i/<in_…>#<secret>` → `createPublicInvoiceSession` → the checkout
+  flow), `submitCheckoutPayment`, `waitForCheckoutOutcome`, `SpendingBudget`, `rpcIntentsBalanceProvider`,
+  `toBaseUnits`.
+- **Type changes (source-compatible unless you read method-specific fields).** `PaidRequest` and
+  `X402PaymentEvent` are unions discriminated by `method` (`"intents-transfer" | "near-intents"`); narrow
+  on `method` before reading `payment.payload.signed`. Only paywalls with `origins` / clients with
+  `crossChain` ever produce the `near-intents` variant. The facilitator's `nearIntents*` methods are
+  optional on the `Facilitator` interface, so custom facilitators written for 0.1 keep compiling (a
+  paywall with `origins` requires them).
+
+## Stage 1, step 1.4 (`@nearpay/spec` 0.1.5) — released in 0.2.0
 
 - `@nearpay/agent-signer`: x402 payloads are signed with the requirement's `extra.deadline` when present
   (new `x402LatestDeadline`); requirements without it keep `now + floor(maxTimeoutSeconds / 2)`.

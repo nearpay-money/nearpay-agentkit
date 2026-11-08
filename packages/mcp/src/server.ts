@@ -196,6 +196,7 @@ export function capLimit(limit: SpendLimit, max: string | undefined): SpendLimit
   const cap = toBaseUnits(max, "max_amount");
   const low = (v: bigint | string | number) => {
     const b = toBaseUnits(v, "limit");
+    // biome-ignore lint/complexity/useMathMinMax: bigints (Math.min does not take them)
     return (b < cap ? b : cap).toString();
   };
   if (typeof limit === "object") return Object.fromEntries(Object.entries(limit).map(([a, v]) => [a, low(v)]));

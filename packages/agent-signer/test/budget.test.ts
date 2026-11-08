@@ -84,6 +84,7 @@ describe("SpendingBudget (property)", () => {
           for (const o of ops) {
             if (o.kind === "reserve") {
               const m = model[o.asset] as { committed: bigint; reserved: bigint };
+              // biome-ignore lint/complexity/useMathMinMax: bigints (Math.min does not take them)
               const cap = o.cap === undefined ? perCall : o.cap < perCall ? o.cap : perCall;
               const ok = o.amount <= cap && m.committed + m.reserved + o.amount <= perSession;
               let got = true;

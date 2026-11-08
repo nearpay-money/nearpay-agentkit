@@ -14,6 +14,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.6.5
         version: 2.6.5
+      '@modelcontextprotocol/sdk':
+        specifier: 1.32.2
+        version: 1.32.2(zod@4.6.7)
       '@nearpay-internal/intents':
         specifier: 0.3.0
         version: 0.3.0(@near-js/types@2.5.1)(@near-js/utils@2.5.1(@near-js/types@2.5.1))(zod@4.6.7)
