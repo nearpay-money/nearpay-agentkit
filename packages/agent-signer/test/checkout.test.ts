@@ -165,3 +165,63 @@ describe("parseCheckoutUrl", () => {
     expect(await failure(payCheckoutSession(target, signer, opts(api.fetch)))).toBe("invalid_requirements");
   });
 });
+
+describe("submitCheckoutPayment / waitForCheckoutOutcome", () => {
+  it("submits a prepared payment and refuses one prepared for another session", async () => {
+    const { submitCheckoutPayment } = await import("../src/index.js");
+    const api = fakeCheckoutApi({ now: NOW });
+    const prepared = await prepareCheckoutPayment({ url }, signer, opts(api.fetch));
+    expect(api.submitted).toHaveLength(0);
+    const other = `cs_01jbz9k3m4n5p6q7r8s9t0v1w9`;
+    await expect(
+      submitCheckoutPayment(
+        { sessionId: other, clientSecret: `${other}_secret_${"a".repeat(32)}`, apiBase: "https://x/api" },
+        prepared,
+      ),
+    ).rejects.toThrow(/another session/);
+    const s = await submitCheckoutPayment({ url }, prepared, { fetch: api.fetch, timeoutMs: 5000 });
+    expect(s.status).toBe("submitted");
+  });
+  it("reports agent_pay refusals with their HTTP status", async () => {
+    const api = fakeCheckoutApi({ now: NOW, agentPayStatus: 400 });
+    const e = await payCheckoutSession({ url }, signer, opts(api.fetch)).catch((x) => x);
+    expect(e).toMatchObject({ code: "api_error", details: { status: 400, apiCode: "intent_invalid" } });
+  });
+  it("polls the public session until the payment is final", async () => {
+    const { waitForCheckoutOutcome } = await import("../src/index.js");
+    const api = fakeCheckoutApi({ now: NOW, intentStatuses: ["processing", "processing", "succeeded"] });
+    const slept: number[] = [];
+    const r = await waitForCheckoutOutcome(
+      { url },
+      { fetch: api.fetch, pollMs: 10, sleep: async (ms) => void slept.push(ms) },
+    );
+    expect(r.final).toBe(true);
+    expect(r.session).toMatchObject({ intent_status: "succeeded", status: "complete" });
+    expect(slept).toStrictEqual([10, 10]);
+  });
+  it("returns the last state when the wait runs out", async () => {
+    const { waitForCheckoutOutcome, isCheckoutOutcomeFinal } = await import("../src/index.js");
+    const api = fakeCheckoutApi({ now: NOW });
+    let t = 0;
+    const r = await waitForCheckoutOutcome(
+      { url },
+      {
+        fetch: api.fetch,
+        waitMs: 5,
+        pollMs: 2,
+        now: () => t,
+        sleep: async (ms) => {
+          t += ms;
+        },
+      },
+    );
+    expect(r.final).toBe(false);
+    expect(r.session.intent_status).toBe("processing");
+    expect(
+      isCheckoutOutcomeFinal({
+        ...r.session,
+        attempt: { status: "refunded" } as never,
+      }),
+    ).toBe(true);
+  });
+});

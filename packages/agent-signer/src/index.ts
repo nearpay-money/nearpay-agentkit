@@ -6,7 +6,8 @@
  * - `buildTransferPayment(requirements, signer, {nonceSaltProvider})` signs exactly the two transfers
  *   a requirement asks for (merchant + NearPay fee, memo = binding).
  * - `payCheckoutSession` pays a checkout session only after verifying sentinel's co-signature with
- *   pinned keys; it refuses on any mismatch.
+ *   pinned keys; it refuses on any mismatch. `payInvoice` opens a hosted invoice's session first.
+ * - `SpendingBudget`: per-call and per-session limits per asset (reserve → commit / release).
  */
 export {
   type AttestationCheck,
@@ -18,20 +19,55 @@ export {
   type VerifyAttestationOptions,
   verifyAttestation,
 } from "./attestation.js";
+export { type IntentsBalanceProvider, type RpcBalanceProviderOptions, rpcIntentsBalanceProvider } from "./balance.js";
+export {
+  type BudgetLimits,
+  type BudgetUsage,
+  type Reservation,
+  type ReserveOptions,
+  SpendingBudget,
+} from "./budget.js";
 export {
   type CheckoutPaymentOptions,
   type CheckoutPaymentResult,
   type CheckoutSessionRef,
+  type CheckoutSubmission,
   type CheckoutTarget,
+  isCheckoutOutcomeFinal,
   type PreparedCheckoutPayment,
+  type PublicCheckoutSessionT,
   parseCheckoutUrl,
   payCheckoutSession,
   prepareCheckoutPayment,
+  resolveTarget,
+  submitCheckoutPayment,
+  type WaitForCheckoutOptions,
+  waitForCheckoutOutcome,
 } from "./checkout.js";
 export { nep413Hash } from "./encoding.js";
 export { AgentSignerError, type AgentSignerErrorCode } from "./errors.js";
 export { ApiCallError } from "./http.js";
-export { type Amount, enforceSpendPolicy, limitFor, type SpendLimit, type SpendPolicy } from "./limits.js";
+export {
+  getInvoice,
+  type InvoicePaymentResult,
+  type InvoicePaymentSessionT,
+  type InvoiceRef,
+  type OpenedInvoiceSession,
+  openInvoiceSession,
+  type PaymentUrl,
+  type PublicInvoiceT,
+  parseInvoiceUrl,
+  parsePaymentUrl,
+  payInvoice,
+} from "./invoice.js";
+export {
+  type Amount,
+  enforceSpendPolicy,
+  limitFor,
+  type SpendLimit,
+  type SpendPolicy,
+  toBaseUnits,
+} from "./limits.js";
 export {
   type BuildTransferOptions,
   buildTransferMessage,
