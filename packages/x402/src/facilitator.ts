@@ -1,6 +1,7 @@
 /**
  * Client for NearPay's x402 facilitator (lld/agentpay.md §5): `/x402/requirements`, `/x402/verify`,
- * `/x402/settle`, `/x402/supported`, called with the merchant's secret (or restricted) key.
+ * `/x402/settle`, `/x402/supported`, and the cross-chain `/x402/near-intents/{requirements,verify,settle}`
+ * (spec 0.3.0, agentpay §3.1), called with the merchant's secret (or restricted) key.
  */
 import {
   type AnyRoute,
@@ -10,6 +11,9 @@ import {
   type RouteBody,
   type RouteResponse,
   safeParseTolerant,
+  x402NearIntentsRequirements,
+  x402NearIntentsSettle,
+  x402NearIntentsVerify,
   x402Requirements,
   x402Settle,
   x402Supported,
@@ -48,15 +52,28 @@ export type VerifyRequestBody = RouteBody<typeof x402Verify>;
 export type VerifyResponseBody = RouteResponse<typeof x402Verify>;
 export type SettleResponseBody = RouteResponse<typeof x402Settle>;
 export type SupportedResponseBody = RouteResponse<typeof x402Supported>;
+export type NearIntentsRequirementsRequest = RouteBody<typeof x402NearIntentsRequirements>;
+export type PaymentRequiredAnyBody = RouteResponse<typeof x402NearIntentsRequirements>;
+export type NearIntentsVerifyRequestBody = RouteBody<typeof x402NearIntentsVerify>;
+export type NearIntentsVerifyResponseBody = RouteResponse<typeof x402NearIntentsVerify>;
+export type NearIntentsSettleResponseBody = RouteResponse<typeof x402NearIntentsSettle>;
 
 export interface Facilitator {
   requirements(body: RequirementsRequest): Promise<PaymentRequiredBody>;
   verify(body: VerifyRequestBody): Promise<VerifyResponseBody>;
   settle(body: VerifyRequestBody): Promise<SettleResponseBody>;
   supported(): Promise<SupportedResponseBody>;
+  // Cross-chain (spec 0.3.0). Optional so custom facilitators written for 0.1 stay valid; the client
+  // returned by `facilitator()` implements them, and a paywall with `origins` requires them.
+  /** Cross-chain issuance: the `intents-transfer` entry (unless disabled) plus one unquoted entry per origin. */
+  nearIntentsRequirements?(body: NearIntentsRequirementsRequest): Promise<PaymentRequiredAnyBody>;
+  /** `quote` payload: mints a deposit quote (`extra`). `deposit` payload: checks token and terms only. */
+  nearIntentsVerify?(body: NearIntentsVerifyRequestBody): Promise<NearIntentsVerifyResponseBody>;
+  /** `deposit` payload: redeems the operation once the merchant is paid (waits ≤ 8 s server-side). */
+  nearIntentsSettle?(body: NearIntentsVerifyRequestBody): Promise<NearIntentsSettleResponseBody>;
 }
 
-export function facilitator(opts: FacilitatorOptions): Facilitator {
+export function facilitator(opts: FacilitatorOptions): Required<Facilitator> {
   if (!/^(sk|rk)_(live|test)_/.test(opts.secretKey)) {
     throw new RangeError("secretKey must be a NearPay secret (sk_…) or restricted (rk_…) key");
   }
@@ -107,5 +124,10 @@ export function facilitator(opts: FacilitatorOptions): Facilitator {
     verify: (body) => call(x402Verify, body, 10_000) as Promise<VerifyResponseBody>,
     settle: (body) => call(x402Settle, body, 15_000) as Promise<SettleResponseBody>,
     supported: () => call(x402Supported, undefined, 10_000) as Promise<SupportedResponseBody>,
+    nearIntentsRequirements: (body) =>
+      call(x402NearIntentsRequirements, body, 10_000) as Promise<PaymentRequiredAnyBody>,
+    // A quote goes through rails (1Click quote + screening, 8 s budget there).
+    nearIntentsVerify: (body) => call(x402NearIntentsVerify, body, 15_000) as Promise<NearIntentsVerifyResponseBody>,
+    nearIntentsSettle: (body) => call(x402NearIntentsSettle, body, 15_000) as Promise<NearIntentsSettleResponseBody>,
   };
 }

@@ -3,7 +3,7 @@
  * `export const GET = withPaywall(handler, {amount: "10000"}, {secretKey})`. The handler runs only
  * after settlement; `paymentOf(request)` returns the settlement inside it.
  */
-import { createPaywall, type PaidRequest, type PaywallConfig, type PaywallOptions } from "./paywall.js";
+import { createPaywall, type PaidRequest, type PaywallConfig, type PaywallOptions, paidRequestOf } from "./paywall.js";
 
 const paid = new WeakMap<Request, PaidRequest>();
 
@@ -26,8 +26,7 @@ export function withPaywall<A extends unknown[]>(
         headers: { "content-type": "application/json", ...out.headers },
       });
     }
-    const { payer, settlement, payment, resource } = out;
-    paid.set(req, { payer, settlement, payment, resource });
+    paid.set(req, paidRequestOf(out));
     const res = await handler(req, ...rest);
     const headers = new Headers(res.headers);
     for (const [k, v] of Object.entries(out.headers)) headers.set(k, v);
