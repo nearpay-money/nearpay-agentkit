@@ -32,7 +32,7 @@ export const ORIGINS: Record<string, { network: string; asset: string }> = {
 };
 export const REFUND_TO = "0x2527D02599Ba641c19Fea793Cd0f9A6e8457c317";
 
-interface NearOp {
+export interface NearOp {
   binding: string;
   entry: NearIntentsPaymentRequirements;
   depositAddress: string;
@@ -43,7 +43,7 @@ interface NearOp {
   reported?: boolean;
 }
 
-interface Issued {
+export interface Issued {
   req: PaymentRequirements;
   resourceUrl: string;
   expiresAt: number;

@@ -13,6 +13,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["packages/*/src/**/*.ts"],
+      // Process entry point (argument parsing and wiring only); smoke-tested by running the built binary.
+      exclude: ["packages/*/src/bin.ts"],
       reporter: ["text", "json-summary"],
       thresholds: { branches: 90, lines: 90 },
     },
