@@ -1,5 +1,5 @@
-import type { PaymentRequirements } from "@nearpay/spec";
 import { verifySigned } from "@nearpay-internal/intents";
+import type { PaymentRequirements } from "@nearpay-money/spec";
 import { describe, expect, it } from "vitest";
 import {
   AgentSignerError,

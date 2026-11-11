@@ -6,7 +6,7 @@
  *   NEARPAY_ORIGINS=nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near \
  *   node --experimental-strip-types server.ts
  */
-import { type PaidRequest, paywall } from "@nearpay/x402";
+import { type PaidRequest, paywall } from "@nearpay-money/x402";
 import express from "express";
 
 const origins = (process.env.NEARPAY_ORIGINS ?? "")

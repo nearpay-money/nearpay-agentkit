@@ -1,6 +1,6 @@
 /** The framework-independent paywall against a spec-driven facilitator fake (lld/sdks-and-tools.md §2). */
-import { buildTransferPayment, nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
-import { decodeX402Header, encodeX402Header, PaymentRequired, SettleResponse } from "@nearpay/spec";
+import { buildTransferPayment, nearSigner, staticSaltProvider } from "@nearpay-money/agent-signer";
+import { decodeX402Header, encodeX402Header, PaymentRequired, SettleResponse } from "@nearpay-money/spec";
 import { describe, expect, it, vi } from "vitest";
 import { createPaywall, facilitator, type PaywallOptions, type PaywallResult } from "../src/index.js";
 import { fakeFacilitator, SECRET_KEY, USDC } from "./fake-facilitator.js";

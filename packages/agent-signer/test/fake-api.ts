@@ -2,6 +2,8 @@
  * A spec-driven fake of the three routes an agent calls to pay a checkout session (agentpay §5,
  * sentinel §6). Requests are validated with the spec route schemas; responses too.
  */
+
+import { verifySigned } from "@nearpay-internal/intents";
 import {
   agentPay,
   agentPayRequirements,
@@ -10,8 +12,7 @@ import {
   getPublicCheckoutSession,
   getPublicInvoice,
   type IntentsRequirement,
-} from "@nearpay/spec";
-import { verifySigned } from "@nearpay-internal/intents";
+} from "@nearpay-money/spec";
 import { ed25519 } from "@noble/curves/ed25519.js";
 import canonicalize from "canonicalize";
 import { hexBytes, vector } from "./support.js";

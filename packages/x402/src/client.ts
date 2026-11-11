@@ -3,7 +3,7 @@
  * returns a fetch that, on `402`, picks a NearPay requirement, enforces the client-side spend limits and
  * pays:
  *
- * - `exact` + `intents-transfer`: signs via `@nearpay/agent-signer` and retries once with
+ * - `exact` + `intents-transfer`: signs via `@nearpay-money/agent-signer` and retries once with
  *   `PAYMENT-SIGNATURE`.
  * - `exact` + `near-intents` (spec 0.3.0, `crossChain` option): retries with a `quote` payload, checks the
  *   quoted entry against the one it quoted, applies the spend limits to the **quoted** amount (origin
@@ -28,7 +28,7 @@ import {
   type SpendingBudget,
   type SpendLimit,
   transferTerms,
-} from "@nearpay/agent-signer";
+} from "@nearpay-money/agent-signer";
 import {
   BaseUnits,
   decodeX402Header,
@@ -47,7 +47,7 @@ import {
   safeParseTolerant,
   X402_VERSION,
   type z,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import {
   DepositNotSentError,
   isOperationOpen,

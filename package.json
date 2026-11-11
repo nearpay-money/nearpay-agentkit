@@ -1,8 +1,8 @@
 {
   "name": "nearpay-agentkit",
   "private": true,
-  "version": "0.2.0",
-  "description": "NearPay agent payments toolkit: @nearpay/x402 (paywall middleware + agent client, incl. cross-chain near-intents), @nearpay/agent-signer (NEAR Intents signing) and @nearpay/mcp (MCP server for agents).",
+  "version": "0.3.0",
+  "description": "NearPay agent payments toolkit: @nearpay-money/x402 (paywall middleware + agent client, incl. cross-chain near-intents), @nearpay-money/agent-signer (NEAR Intents signing) and @nearpay-money/mcp (MCP server for agents).",
   "license": "Apache-2.0",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
@@ -22,8 +22,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.5",
     "@modelcontextprotocol/sdk": "1.32.2",
-    "@nearpay-internal/intents": "0.3.0",
-    "@nearpay/spec": "0.3.0",
+    "@nearpay-internal/intents": "0.5.0",
+    "@nearpay-money/spec": "0.5.0",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",
     "@types/express": "5.0.6",
@@ -41,7 +41,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@nearpay/spec": "0.3.0"
+      "@nearpay-money/spec": "0.5.0"
     },
     "onlyBuiltDependencies": [
       "esbuild"

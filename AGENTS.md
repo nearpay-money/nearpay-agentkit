@@ -6,7 +6,7 @@ Scope: Agent payments toolkit: x402 server middleware (Express/Hono/Next) and cl
 ## Before changing anything
 
 1. Read `../nearpay-brain/AGENTS.md`, then this repo's LLD (`../nearpay-brain/lld/sdks-and-tools.md`) — it is the implementation spec; do not make design decisions it already makes.
-2. Contracts (requests, responses, events, errors) come from `@nearpay/spec`. If one must change, open a PR in `nearpay-spec` first; never hand-write contract types here.
+2. Contracts (requests, responses, events, errors) come from `@nearpay-money/spec`. If one must change, open a PR in `nearpay-spec` first; never hand-write contract types here.
 3. Check your change against invariants INV-1…INV-9 in `nearpay-brain/product/requirements.md`.
 
 ## Rules for this repo

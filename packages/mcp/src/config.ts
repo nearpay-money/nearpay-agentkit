@@ -18,8 +18,8 @@ import {
   SpendingBudget,
   type SpendLimit,
   staticSaltProvider,
-} from "@nearpay/agent-signer";
-import type { OperationStore, OriginSigner } from "@nearpay/x402";
+} from "@nearpay-money/agent-signer";
+import type { OperationStore, OriginSigner } from "@nearpay-money/x402";
 import type { Logger } from "./redact.js";
 
 /** Well-known 6-decimal stablecoins (NEAR Intents ids), the only assets allowed by default. */

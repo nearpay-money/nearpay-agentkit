@@ -18,7 +18,7 @@ import {
   x402Settle,
   x402Supported,
   x402Verify,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 
 export const DEFAULT_API_BASE = "https://api.nearpay.money";
 

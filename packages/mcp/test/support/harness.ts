@@ -3,13 +3,13 @@
  * with every outbound call routed by origin to spec-driven fakes:
  *   https://api.test               → spec-validating mock (merchant routes)
  *   https://pay.nearpay.localhost  → agent-signer's checkout/invoice/sentinel fake
- *   https://merchant.test          → an x402 paywall (@nearpay/x402) backed by the facilitator fake
+ *   https://merchant.test          → an x402 paywall (@nearpay-money/x402) backed by the facilitator fake
  */
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
-import { type PaywallConfig, withPaywall } from "@nearpay/x402";
+import { nearSigner, staticSaltProvider } from "@nearpay-money/agent-signer";
+import { type PaywallConfig, withPaywall } from "@nearpay-money/x402";
 import { fakeCheckoutApi, SENTINEL_KEY } from "../../../agent-signer/test/fake-api.js";
 import { hexBytes, vector } from "../../../agent-signer/test/support.js";
 import { SECRET_KEY as FACILITATOR_KEY, fakeFacilitator } from "../../../x402/test/fake-facilitator.js";

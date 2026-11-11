@@ -1,7 +1,7 @@
 import { mkdtemp, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { nearSigner } from "@nearpay/agent-signer";
+import { nearSigner } from "@nearpay-money/agent-signer";
 import bs58 from "bs58";
 import { describe, expect, it } from "vitest";
 import {

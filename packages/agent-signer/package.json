@@ -1,8 +1,29 @@
 {
-  "name": "@nearpay/agent-signer",
-  "version": "0.2.0",
+  "name": "@nearpay-money/agent-signer",
+  "version": "0.3.0",
   "description": "Sign NearPay NEAR Intents transfers for agents: NEP-413 and ERC-191 signers, MultiPayload builder, sentinel-verified checkout payments.",
+  "keywords": [
+    "nearpay",
+    "near",
+    "near-intents",
+    "nep-413",
+    "erc-191",
+    "signer",
+    "agents",
+    "payments",
+    "crypto"
+  ],
+  "homepage": "https://docs.nearpay.money",
+  "bugs": {
+    "url": "https://github.com/nearpay-money/nearpay-agentkit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nearpay-money/nearpay-agentkit.git",
+    "directory": "packages/agent-signer"
+  },
   "license": "Apache-2.0",
+  "author": "NearPay <nearpaydotmoney@gmail.com> (https://nearpay.money)",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -24,7 +45,7 @@
     "build": "node ../../scripts/build-package.mjs"
   },
   "dependencies": {
-    "@nearpay/spec": "0.3.0",
+    "@nearpay-money/spec": "0.5.0",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",
     "bs58": "6.0.0",
@@ -35,5 +56,9 @@
   },
   "devDependencies": {
     "zod": "4.6.7"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

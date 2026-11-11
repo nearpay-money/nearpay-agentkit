@@ -2,7 +2,7 @@
  * Verifier nonce salt (foundations §14): nonce = 4-byte `current_salt` of `intents.near` ‖ 28 random
  * bytes. The default provider reads `current_salt` over NEAR JSON-RPC and caches it for 60 s.
  */
-import { INTENTS_CONTRACT } from "@nearpay/spec";
+import { INTENTS_CONTRACT } from "@nearpay-money/spec";
 import { toBase64 } from "./encoding.js";
 import { AgentSignerError } from "./errors.js";
 

@@ -1,15 +1,23 @@
-# @nearpay/x402
+# @nearpay-money/x402
 
 NearPay's x402 profile for merchants and agents (`nearpay-brain/lld/sdks-and-tools.md` §2): `exact` +
 `intents-transfer` on `near:mainnet` (`lld/agentpay.md` §3) and, since 0.2.0, cross-chain `exact` +
 `near-intents` (x402 PR #3370 wire shapes, `lld/agentpay.md` §3.1).
 
+## Install
+
+```sh
+npm install @nearpay-money/x402 zod     # + hono for @nearpay-money/x402/hono
+```
+
+ESM only, Node.js ≥ 22.11. `zod` (^4.6.7) is a peer dependency, `hono` an optional one.
+
 ## Merchants: put a price on a route
 
 ```ts
-import { paywall } from "@nearpay/x402"; // Express
-import { withPaywall, paymentOf } from "@nearpay/x402"; // fetch handlers, Next.js route handlers
-import { honoPaywall } from "@nearpay/x402/hono"; // Hono
+import { paywall } from "@nearpay-money/x402"; // Express
+import { withPaywall, paymentOf } from "@nearpay-money/x402"; // fetch handlers, Next.js route handlers
+import { honoPaywall } from "@nearpay-money/x402/hono"; // Hono
 
 app.get(
   "/premium",
@@ -68,8 +76,8 @@ settled operation → `402 exact_near_intents_operation_executed`. `paymentOf(re
 ## Agents: pay on 402
 
 ```ts
-import { withX402, decodePaymentResponse } from "@nearpay/x402";
-import { nearSigner } from "@nearpay/agent-signer";
+import { withX402, decodePaymentResponse } from "@nearpay-money/x402";
+import { nearSigner } from "@nearpay-money/agent-signer";
 
 const pay = withX402(fetch, nearSigner({ accountId: "agent.near", keyPair }), {
   maxAmountPerRequest: { "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1": "50000" },
@@ -81,7 +89,7 @@ decodePaymentResponse(res); // { success, transaction, payer, amount }
 
 On `402` it picks the NearPay requirement, enforces the limits on amount + fee (throws
 `AgentSignerError` `spend_limit_exceeded` / `pay_to_not_allowed` instead of paying), signs with
-`@nearpay/agent-signer` and retries once with `PAYMENT-SIGNATURE`. Other 402s are returned untouched.
+`@nearpay-money/agent-signer` and retries once with `PAYMENT-SIGNATURE`. Other 402s are returned untouched.
 The Verifier deadline is the requirement's `extra.deadline` (spec 0.1.5) when present, else
 `now + maxTimeoutSeconds / 2`. `onPayment({requirements, payload, response, settlement, replayed})`
 runs after the paid retry; `replayed: true` means the merchant repeated an earlier settlement of this
@@ -91,8 +99,8 @@ than this version (e.g. an `errorReason`) is kept as received.
 ### Cross-chain payments (`crossChain`, 0.2.0)
 
 ```ts
-import { withX402, evmDepositor, resumeX402Operation } from "@nearpay/x402";
-import { SpendingBudget, rpcIntentsBalanceProvider } from "@nearpay/agent-signer";
+import { withX402, evmDepositor, resumeX402Operation } from "@nearpay-money/x402";
+import { SpendingBudget, rpcIntentsBalanceProvider } from "@nearpay-money/agent-signer";
 
 const pay = withX402(fetch, signer /* or null */, {
   maxAmountPerRequest: { [BASE_USDC]: "1100000", [USDC]: "1100000" }, // origin units for near-intents
@@ -117,3 +125,11 @@ origin signer releases the budget; any other deposit failure counts as spent.
 Tests: every adapter runs the full agent → merchant → facilitator loop against a spec-validated fake
 facilitator that verifies payloads with the Verifier code agentpay uses; the sandbox E2E lives in
 `nearpay-testbed`. License Apache-2.0.
+
+## Links
+
+- Documentation: https://docs.nearpay.money
+- Website: https://nearpay.money
+- Source and changelog: https://github.com/nearpay-money/nearpay-agentkit
+
+License: Apache-2.0. Earlier versions were named `@nearpay/…` on NearPay's private registry only; NearPay never publishes under the `@nearpay` npm scope (it belongs to an unrelated company).

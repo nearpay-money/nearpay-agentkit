@@ -1,5 +1,5 @@
 /**
- * @nearpay/agent-signer — signing NearPay NEAR Intents transfers for agents (lld/sdks-and-tools.md §2).
+ * @nearpay-money/agent-signer — signing NearPay NEAR Intents transfers for agents (lld/sdks-and-tools.md §2).
  *
  * - `nearSigner` (NEP-413 / raw Ed25519) and `evmSigner` (ERC-191) produce Verifier `MultiPayload`s
  *   byte-identical to `nearpay-spec/test-vectors/intents-payloads.json`.

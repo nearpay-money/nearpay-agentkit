@@ -6,7 +6,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { chmod, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { OperationStore, X402Operation } from "@nearpay/x402";
+import type { OperationStore, X402Operation } from "@nearpay-money/x402";
 
 const fileOf = (dir: string, id: string) => join(dir, `${createHash("sha256").update(id).digest("hex")}.json`);
 

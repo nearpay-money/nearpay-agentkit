@@ -12,7 +12,7 @@ import {
   PaymentRequirements,
   type PaymentRequirements as PaymentRequirementsT,
   type TransferIntent,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import { fromHex, toBase64 } from "./encoding.js";
 import { AgentSignerError } from "./errors.js";
 import { rpcSaltProvider, type SaltProvider } from "./salt.js";

@@ -3,7 +3,7 @@
  * an `intents-transfer` requirement when it can cover it and fall back to a cross-chain `near-intents`
  * one otherwise (lld/sdks-and-tools.md §2). Read-only; a failed read is reported, never guessed.
  */
-import { INTENTS_CONTRACT } from "@nearpay/spec";
+import { INTENTS_CONTRACT } from "@nearpay-money/spec";
 import { toBase64 } from "./encoding.js";
 import { AgentSignerError } from "./errors.js";
 import { DEFAULT_NEAR_RPC_URLS } from "./salt.js";

@@ -1,5 +1,5 @@
 /**
- * Hono middleware (`@nearpay/x402/hono`): `app.use("/premium", honoPaywall({amount: "10000"}, {secretKey}))`.
+ * Hono middleware (`@nearpay-money/x402/hono`): `app.use("/premium", honoPaywall({amount: "10000"}, {secretKey}))`.
  * The paid request carries the settlement in `c.get("x402")`; the response gets `PAYMENT-RESPONSE`.
  */
 import type { MiddlewareHandler } from "hono";

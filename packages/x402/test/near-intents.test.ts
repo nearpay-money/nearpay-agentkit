@@ -3,14 +3,14 @@
  * agent client (`crossChain`) against the spec-driven facilitator fake, wired together through
  * `withPaywall` — quote → second 402 → deposit → settle, plus every refusal on both sides.
  */
-import { type AgentSignerError, nearSigner, SpendingBudget, staticSaltProvider } from "@nearpay/agent-signer";
+import { type AgentSignerError, nearSigner, SpendingBudget, staticSaltProvider } from "@nearpay-money/agent-signer";
 import {
   decodeX402Header,
   encodeX402Header,
   type NearIntentsPaymentRequirements,
   NearIntentsSettleResponse,
   X402PaymentRequiredAny,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import { describe, expect, it, vi } from "vitest";
 import {
   checkQuotedEntry,

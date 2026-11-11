@@ -1,5 +1,5 @@
 /** Merchant tools against the spec-validating mock (requests and responses checked against spec 0.3.0). */
-import { createCheckoutSession, getPaymentIntent, listPaymentIntents } from "@nearpay/spec";
+import { createCheckoutSession, getPaymentIntent, listPaymentIntents } from "@nearpay-money/spec";
 import { afterEach, describe, expect, it } from "vitest";
 import { CS, checkoutSession, PI, paymentIntent, USDC } from "./support/fixtures.js";
 import { harness } from "./support/harness.js";

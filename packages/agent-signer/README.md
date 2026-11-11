@@ -1,8 +1,18 @@
-# @nearpay/agent-signer
+# @nearpay-money/agent-signer
 
 Sign NearPay NEAR Intents transfers for AI agents and scripts: the payer-side half of NearPay's agent
 payments (`nearpay-brain/lld/sdks-and-tools.md` §2). NearPay never holds the key; it only relays what
 you signed (INV-1).
+
+## Install
+
+```sh
+npm install @nearpay-money/agent-signer zod
+```
+
+ESM only, Node.js ≥ 22.11. `zod` (^4.6.7) is a peer dependency.
+
+## Quickstart
 
 ```ts
 import {
@@ -11,7 +21,7 @@ import {
   buildTransferPayment,
   payCheckoutSession,
   parsePinnedKeys,
-} from "@nearpay/agent-signer";
+} from "@nearpay-money/agent-signer";
 
 // NEP-413 (NEAR key) — or evmSigner(privateKeyToAccount(…)) for ERC-191 with an EVM key
 const signer = nearSigner({ accountId: "agent.near", keyPair: "ed25519:…" });
@@ -42,7 +52,7 @@ const { prepared, submission } = await payCheckoutSession(
 | `payInvoice(target, signer, opts)` / `openInvoiceSession` / `parseInvoiceUrl` | Hosted invoice `…/i/<in_…>#<invoice secret>`: `getPublicInvoice` (refused unless `payable` and of the agent's mode) → `createPublicInvoiceSession` (`X-NearPay-Invoice-Secret`) → the checkout flow above. `parsePaymentUrl` tells checkout and invoice URLs apart. |
 | `submitCheckoutPayment` / `waitForCheckoutOutcome`                            | Submit a prepared payment separately (a 4xx means nothing was queued); poll the public session until the payment is final.                                                                                                                                          |
 | `SpendingBudget({perCall, perSession})`                                       | Session budget per asset: `reserve(asset, amount)` checks both limits counting committed and reserved amounts, then `commit()` (money moved or may have) or `release()` (refused before signing/sending).                                                           |
-| `rpcIntentsBalanceProvider({rpcUrls?})`                                       | The signer's NEAR Intents balance (`mt_balance_of`), used by `@nearpay/x402` to prefer `intents-transfer` over a cross-chain deposit.                                                                                                                               |
+| `rpcIntentsBalanceProvider({rpcUrls?})`                                       | The signer's NEAR Intents balance (`mt_balance_of`), used by `@nearpay-money/x402` to prefer `intents-transfer` over a cross-chain deposit.                                                                                                                         |
 
 **x402 deadlines.** Since spec 0.1.5 a requirement carries its absolute expiry `extra.deadline` (the
 binding's `expires_at`); payloads are signed with that deadline (`x402LatestDeadline`), at or before it
@@ -56,8 +66,16 @@ stay strictly validated (they contain no open enums) before their signature is c
 
 ## Tests
 
-Signatures are byte-identical to `@nearpay/spec/test-vectors/intents-payloads.json` (NEP-413, ERC-191
+Signatures are byte-identical to `@nearpay-money/spec/test-vectors/intents-payloads.json` (NEP-413, ERC-191
 via viem, raw Ed25519) and verify with the Verifier code agentpay and the sandbox use; attestation
 checks run against `sentinel-attestation.json`; checkout payments run against a spec-driven fake API.
 
 Design: `nearpay-brain/lld/sdks-and-tools.md` §2, `lld/agentpay.md` §3/§5, foundations §14. License Apache-2.0.
+
+## Links
+
+- Documentation: https://docs.nearpay.money
+- Website: https://nearpay.money
+- Source and changelog: https://github.com/nearpay-money/nearpay-agentkit
+
+License: Apache-2.0. Earlier versions were named `@nearpay/…` on NearPay's private registry only; NearPay never publishes under the `@nearpay` npm scope (it belongs to an unrelated company).
