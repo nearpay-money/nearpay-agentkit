@@ -2,8 +2,9 @@
  * Cross-repo vectors (nearpay-spec/test-vectors/intents-payloads.json): the signers must produce the
  * exact MultiPayloads agentpay and the sandbox Verifier verify.
  */
-import { IntentMessage, MultiPayload } from "@nearpay/spec";
+
 import { verifySigned } from "@nearpay-internal/intents";
+import { IntentMessage, MultiPayload } from "@nearpay-money/spec";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it } from "vitest";

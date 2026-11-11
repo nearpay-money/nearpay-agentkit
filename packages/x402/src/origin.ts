@@ -8,7 +8,7 @@
  * The persisted operation (`OperationStore`) holds the quote's `operationToken`, a bearer credential:
  * keep the store private, never log it.
  */
-import type { NearIntentsPaymentRequirements, NearIntentsSettleResponse, z } from "@nearpay/spec";
+import type { NearIntentsPaymentRequirements, NearIntentsSettleResponse, z } from "@nearpay-money/spec";
 
 export interface DepositRequest {
   /** Origin CAIP-2 network (`accepted.network`). */

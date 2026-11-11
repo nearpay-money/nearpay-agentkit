@@ -4,7 +4,7 @@
  * the sandbox runs in nearpay-testbed.
  */
 import type { AddressInfo } from "node:net";
-import { nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
+import { nearSigner, staticSaltProvider } from "@nearpay-money/agent-signer";
 import express from "express";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

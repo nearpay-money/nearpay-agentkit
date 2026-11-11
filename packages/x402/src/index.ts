@@ -1,10 +1,10 @@
 /**
- * @nearpay/x402 — NearPay's x402 profile (`exact` + `intents-transfer` on `near:mainnet`,
+ * @nearpay-money/x402 — NearPay's x402 profile (`exact` + `intents-transfer` on `near:mainnet`,
  * lld/agentpay.md §3, and cross-chain `exact` + `near-intents`, §3.1) for merchants and agents
  * (lld/sdks-and-tools.md §2).
  *
  * Merchants: `paywall` (Express), `withPaywall` (fetch handlers / Next.js), `honoPaywall`
- * (`@nearpay/x402/hono`), all built on `createPaywall` (`origins` enables near-intents).
+ * (`@nearpay-money/x402/hono`), all built on `createPaywall` (`origins` enables near-intents).
  * Agents: `withX402(fetch, signer, limits)` (`crossChain` enables near-intents deposits).
  */
 export {

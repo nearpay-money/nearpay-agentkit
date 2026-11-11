@@ -1,13 +1,13 @@
 /**
- * Merchant API calls for the merchant tools, driven by the spec route tables (`@nearpay/spec`): the
+ * Merchant API calls for the merchant tools, driven by the spec route tables (`@nearpay-money/spec`): the
  * configured secret/restricted key, `NearPay-Version`, an `Idempotency-Key` on every POST (reused on
  * retries), tolerant response parsing. Retries: 429 and `idempotency_in_progress` for any route; network
- * errors and 5xx only for replay-safe routes (GET, `idempotent: true`) — the same policy as `@nearpay/node`.
+ * errors and 5xx only for replay-safe routes (GET, `idempotent: true`) — the same policy as `@nearpay-money/node`.
  * (agentkit depends on the spec only, so the three routes are called directly instead of through the
  * node SDK; lld/sdks-and-tools.md §2.)
  */
 import { randomUUID } from "node:crypto";
-import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS, safeParseTolerant } from "@nearpay/spec";
+import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS, safeParseTolerant } from "@nearpay-money/spec";
 
 export class NearPayApiError extends Error {
   constructor(

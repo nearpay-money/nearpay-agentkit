@@ -1,7 +1,7 @@
 /** Unit coverage of the MCP building blocks: merchant client retries, error mapping, result summaries, logger. */
-import { AgentSignerError, ApiCallError, nearSigner, SpendingBudget } from "@nearpay/agent-signer";
-import { createCheckoutSession, getPaymentIntent, listPaymentIntents, z } from "@nearpay/spec";
-import { memoryOperationStore, X402ClientError, type X402Operation } from "@nearpay/x402";
+import { AgentSignerError, ApiCallError, nearSigner, SpendingBudget } from "@nearpay-money/agent-signer";
+import { createCheckoutSession, getPaymentIntent, listPaymentIntents, z } from "@nearpay-money/spec";
+import { memoryOperationStore, X402ClientError, type X402Operation } from "@nearpay-money/x402";
 import { describe, expect, it, vi } from "vitest";
 import {
   createNearPayMcpContext,

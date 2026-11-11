@@ -1,4 +1,4 @@
-/** Errors raised by `@nearpay/agent-signer`. Every refusal to sign carries a stable `code`. */
+/** Errors raised by `@nearpay-money/agent-signer`. Every refusal to sign carries a stable `code`. */
 
 export type AgentSignerErrorCode =
   /** The requirement is not a valid x402 `intents-transfer` requirement or IntentsRequirement. */

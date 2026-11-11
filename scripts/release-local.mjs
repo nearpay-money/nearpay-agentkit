@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Publishes @nearpay/agent-signer, @nearpay/x402 and @nearpay/mcp to the local registry (Verdaccio in the
+ * Publishes @nearpay-money/agent-signer, @nearpay-money/x402 and @nearpay-money/mcp to the local registry (Verdaccio in the
  * nearpay-deploy Compose stack, system audit S-11), in dependency order, as reproducible tarballs
  * (see `stage`; same procedure as nearpay-kit's release script). Idempotent: a version already
  * published with identical contents is skipped; different contents under the same version fail (bump it).
@@ -205,9 +205,23 @@ async function main() {
         console.log(`= ${name}@${version} already published (identical)`);
         continue;
       }
-      run("npm", ["publish", tgz, "--userconfig", npmrc, "--registry", `${registry}/`, "--access", "public"], {
-        env: npmEnv,
-      });
+      run(
+        "npm",
+        [
+          "publish",
+          tgz,
+          "--userconfig",
+          npmrc,
+          "--registry",
+          `${registry}/`,
+          "--access",
+          "public",
+          "--provenance=false",
+        ],
+        {
+          env: npmEnv,
+        },
+      );
       console.log(`+ ${name}@${version} published to ${registry}`);
     }
   } finally {

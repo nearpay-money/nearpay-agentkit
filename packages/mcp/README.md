@@ -1,8 +1,19 @@
-# @nearpay/mcp
+# @nearpay-money/mcp
 
 NearPay MCP server for AI agents (`nearpay-brain/lld/sdks-and-tools.md` §2): merchant tools on a NearPay
 account and payer tools that spend from the agent's own wallet — non-custodially, within limits, only to
 allow-listed merchants, with evidence for every payment.
+
+## Install
+
+```sh
+npm install -g @nearpay-money/mcp   # or run it without installing: npx -y @nearpay-money/mcp
+nearpay-mcp --help
+```
+
+Node.js ≥ 22.11. `viem` is an optional peer (cross-chain payments from an EVM wallet).
+
+## Quickstart
 
 ```sh
 npx nearpay-mcp            # stdio (default)
@@ -68,7 +79,7 @@ Claude Desktop / Claude Code:
   "mcpServers": {
     "nearpay": {
       "command": "npx",
-      "args": ["-y", "@nearpay/mcp"],
+      "args": ["-y", "@nearpay-money/mcp"],
       "env": {
         "NEARPAY_MCP_NEAR_PRIVATE_KEY_FILE": "/home/me/.near-credentials/mainnet/agent.near.json",
         "NEARPAY_MCP_ALLOWED_PAY_TO": "merchant.near",
@@ -89,3 +100,11 @@ routes: credentials, version, idempotency keys, strict params/query/body, respon
 agent-signer / x402 fakes (checkout, invoice, sentinel, facilitator incl. near-intents); the HTTP
 lockdown runs over real sockets; the viem origin signer signs against a fake JSON-RPC. License
 Apache-2.0.
+
+## Links
+
+- Documentation: https://docs.nearpay.money
+- Website: https://nearpay.money
+- Source and changelog: https://github.com/nearpay-money/nearpay-agentkit
+
+License: Apache-2.0. Earlier versions were named `@nearpay/…` on NearPay's private registry only; NearPay never publishes under the `@nearpay` npm scope (it belongs to an unrelated company).

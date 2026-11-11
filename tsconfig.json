@@ -4,10 +4,10 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@nearpay/agent-signer": ["./packages/agent-signer/src/index.ts"],
-      "@nearpay/x402": ["./packages/x402/src/index.ts"],
-      "@nearpay/x402/hono": ["./packages/x402/src/hono.ts"],
-      "@nearpay/mcp": ["./packages/mcp/src/index.ts"]
+      "@nearpay-money/agent-signer": ["./packages/agent-signer/src/index.ts"],
+      "@nearpay-money/x402": ["./packages/x402/src/index.ts"],
+      "@nearpay-money/x402/hono": ["./packages/x402/src/hono.ts"],
+      "@nearpay-money/mcp": ["./packages/mcp/src/index.ts"]
     }
   },
   "include": [

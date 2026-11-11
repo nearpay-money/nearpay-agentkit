@@ -12,7 +12,7 @@ import {
   type InvoicePaymentSession,
   type PublicInvoice,
   type z,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import {
   type CheckoutPaymentOptions,
   type CheckoutPaymentResult,

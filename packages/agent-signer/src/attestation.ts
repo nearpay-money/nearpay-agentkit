@@ -5,7 +5,7 @@
  * Ed25519 over the RFC 8785 canonical JSON of `attestation`, a pinned key whose `kid` is allow-listed,
  * and every attested field equal to what will be signed. Keys are never fetched from the API.
  */
-import { type Attestation, type IntentsRequirement, SignedAttestation } from "@nearpay/spec";
+import { type Attestation, type IntentsRequirement, SignedAttestation } from "@nearpay-money/spec";
 import { ed25519 } from "@noble/curves/ed25519.js";
 import canonicalize from "canonicalize";
 import { fromBase64Url, utf8 } from "./encoding.js";

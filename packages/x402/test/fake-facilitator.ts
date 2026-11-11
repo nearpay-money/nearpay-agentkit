@@ -5,6 +5,7 @@
  * are validated with the spec route schemas.
  */
 import { createHash } from "node:crypto";
+import { verifySigned } from "@nearpay-internal/intents";
 import {
   type NearIntentsPaymentRequirements,
   type PaymentRequirements,
@@ -15,8 +16,7 @@ import {
   x402Settle,
   x402Verify,
   type z,
-} from "@nearpay/spec";
-import { verifySigned } from "@nearpay-internal/intents";
+} from "@nearpay-money/spec";
 import { sha256 } from "@noble/hashes/sha2.js";
 import bs58 from "bs58";
 import canonicalize from "canonicalize";

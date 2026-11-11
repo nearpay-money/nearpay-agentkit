@@ -49,7 +49,7 @@ import {
   X402_NETWORK,
   X402_VERSION,
   type z,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import { type Facilitator, FacilitatorError, type FacilitatorOptions, facilitator } from "./facilitator.js";
 
 export type SettleResponseT = z.output<typeof SettleResponse>;

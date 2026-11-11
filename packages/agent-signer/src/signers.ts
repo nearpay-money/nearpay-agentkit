@@ -3,7 +3,7 @@
  * `nearSigner` (NEP-413, or raw Ed25519 for agents) and `evmSigner` (ERC-191 `personal_sign`).
  * The agent's key never leaves this process; NearPay only relays what was signed (INV-1).
  */
-import { INTENTS_CONTRACT, type IntentMessage, type MultiPayload, NearAccountId } from "@nearpay/spec";
+import { INTENTS_CONTRACT, type IntentMessage, type MultiPayload, NearAccountId } from "@nearpay-money/spec";
 import { ed25519 } from "@noble/curves/ed25519.js";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { keccak_256 } from "@noble/hashes/sha3.js";

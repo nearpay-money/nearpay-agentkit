@@ -1,7 +1,8 @@
 /** `withX402` behaviour in isolation (scripted servers). */
-import { nearSigner, staticSaltProvider } from "@nearpay/agent-signer";
-import { decodeX402Header, encodeX402Header, PaymentPayload } from "@nearpay/spec";
+
 import { verifySigned } from "@nearpay-internal/intents";
+import { nearSigner, staticSaltProvider } from "@nearpay-money/agent-signer";
+import { decodeX402Header, encodeX402Header, PaymentPayload } from "@nearpay-money/spec";
 import { describe, expect, it, vi } from "vitest";
 import { decodePaymentResponse, parsePaymentRequired, withX402, X402ClientError } from "../src/index.js";
 import { USDC } from "./fake-facilitator.js";
@@ -192,7 +193,7 @@ describe("header helpers", () => {
 
 describe("withX402 budget and parsing", () => {
   it("commits the debit of a settled payment and releases a definite refusal", async () => {
-    const { SpendingBudget } = await import("@nearpay/agent-signer");
+    const { SpendingBudget } = await import("@nearpay-money/agent-signer");
     const budget = new SpendingBudget({ perCall: 20_000, perSession: 30_000 });
     const ok = server();
     expect((await withX402(ok.f, signer, { ...opts, budget })("https://shop.test/premium")).status).toBe(200);
@@ -228,7 +229,7 @@ describe("withX402 budget and parsing", () => {
     );
   });
   it("commits when the paid retry fails in transport, releases when signing fails", async () => {
-    const { SpendingBudget } = await import("@nearpay/agent-signer");
+    const { SpendingBudget } = await import("@nearpay-money/agent-signer");
     const budget = new SpendingBudget({ perCall: 20_000, perSession: 100_000 });
     let n = 0;
     const flaky = (async () => {

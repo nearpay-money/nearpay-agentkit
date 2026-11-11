@@ -6,7 +6,15 @@
  * **strictly** with the route's schemas. Violations answer `400 invalid_request` and are recorded
  * (tests assert none). Handler results are validated against the route's response schema.
  */
-import { type AnyRoute, API_VERSION, ERRORS, type ErrorCode, ErrorEnvelope, PUBLIC_ROUTES, z } from "@nearpay/spec";
+import {
+  type AnyRoute,
+  API_VERSION,
+  ERRORS,
+  type ErrorCode,
+  ErrorEnvelope,
+  PUBLIC_ROUTES,
+  z,
+} from "@nearpay-money/spec";
 
 export interface MockRequest {
   route: AnyRoute;

@@ -30,7 +30,7 @@ import {
   toBaseUnits,
   transferTerms,
   waitForCheckoutOutcome,
-} from "@nearpay/agent-signer";
+} from "@nearpay-money/agent-signer";
 import {
   CheckoutSessionCreate,
   createCheckoutSession,
@@ -38,7 +38,7 @@ import {
   listPaymentIntents,
   SPEC_VERSION,
   z,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import {
   isOperationOpen,
   memoryOperationStore,
@@ -49,7 +49,7 @@ import {
   X402ClientError,
   type X402Operation,
   type X402PaymentEvent,
-} from "@nearpay/x402";
+} from "@nearpay-money/x402";
 import {
   DEFAULT_API_BASE,
   DEFAULT_LIMITS,
@@ -62,7 +62,7 @@ import { type MerchantClient, merchantClient, NearPayApiError } from "./merchant
 import { type Logger, redact, stderrLogger } from "./redact.js";
 
 export const SERVER_NAME = "nearpay";
-export const SERVER_VERSION = "0.2.0";
+export const SERVER_VERSION = "0.3.0";
 
 export const MERCHANT_TOOLS = [
   "nearpay_create_checkout_session",

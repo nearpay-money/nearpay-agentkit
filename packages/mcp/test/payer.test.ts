@@ -1,5 +1,5 @@
 /** Payer tools end to end: checkout and invoice payments, x402 (intents-transfer and near-intents), limits. */
-import { type DepositRequest, memoryOperationStore, type OriginSigner } from "@nearpay/x402";
+import { type DepositRequest, memoryOperationStore, type OriginSigner } from "@nearpay-money/x402";
 import { afterEach, describe, expect, it } from "vitest";
 import { INVOICE, INVOICE_SECRET, SECRET, SESSION } from "../../agent-signer/test/fake-api.js";
 import { BASE_USDC, ORIGINS, REFUND_TO } from "../../x402/test/fake-facilitator.js";

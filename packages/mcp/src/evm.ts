@@ -3,7 +3,7 @@
  * network) from a local private key and wraps them in `evmDepositor`. viem is an optional peer
  * dependency, loaded only when an EVM key is configured.
  */
-import { type EvmWalletLike, evmDepositor, type OriginSigner } from "@nearpay/x402";
+import { type EvmWalletLike, evmDepositor, type OriginSigner } from "@nearpay-money/x402";
 import { ConfigError } from "./config.js";
 
 export async function viemOriginSigner(cfg: {

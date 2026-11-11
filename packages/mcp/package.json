@@ -1,8 +1,29 @@
 {
-  "name": "@nearpay/mcp",
-  "version": "0.2.0",
+  "name": "@nearpay-money/mcp",
+  "version": "0.3.0",
   "description": "NearPay MCP server for agents: merchant tools (checkout sessions, payment intents) and payer tools (checkout and invoice payments, x402 incl. cross-chain near-intents) with spend limits and a merchant allow-list.",
+  "keywords": [
+    "nearpay",
+    "mcp",
+    "model-context-protocol",
+    "agents",
+    "ai",
+    "x402",
+    "near-intents",
+    "payments",
+    "crypto"
+  ],
+  "homepage": "https://docs.nearpay.money",
+  "bugs": {
+    "url": "https://github.com/nearpay-money/nearpay-agentkit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nearpay-money/nearpay-agentkit.git",
+    "directory": "packages/mcp"
+  },
   "license": "Apache-2.0",
+  "author": "NearPay <nearpaydotmoney@gmail.com> (https://nearpay.money)",
   "type": "module",
   "sideEffects": false,
   "bin": {
@@ -28,21 +49,25 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
-    "@nearpay/agent-signer": "workspace:*",
-    "@nearpay/spec": "0.3.0",
-    "@nearpay/x402": "workspace:*"
+    "@nearpay-money/agent-signer": "workspace:*",
+    "@nearpay-money/spec": "0.5.0",
+    "@nearpay-money/x402": "workspace:*"
   },
   "peerDependencies": {
     "zod": "^4.6.7",
     "viem": "^2.21.0"
   },
-  "devDependencies": {
-    "zod": "4.6.7",
-    "viem": "2.57.7"
-  },
   "peerDependenciesMeta": {
     "viem": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "zod": "4.6.7",
+    "viem": "2.57.7"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

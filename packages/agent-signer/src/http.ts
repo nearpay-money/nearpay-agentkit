@@ -1,5 +1,5 @@
 /** Minimal client for the public payer/sentinel routes this package calls, driven by the spec route tables. */
-import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS, safeParseTolerant } from "@nearpay/spec";
+import { type AnyRoute, API_VERSION, ErrorEnvelope, HEADERS, safeParseTolerant } from "@nearpay-money/spec";
 import { AgentSignerError } from "./errors.js";
 
 export interface CallOptions {

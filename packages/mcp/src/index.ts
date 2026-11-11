@@ -1,5 +1,5 @@
 /**
- * @nearpay/mcp — NearPay MCP server for agents (lld/sdks-and-tools.md §2, Stage 3): merchant tools
+ * @nearpay-money/mcp — NearPay MCP server for agents (lld/sdks-and-tools.md §2, Stage 3): merchant tools
  * (checkout sessions, payment intents) and payer tools (checkout and invoice payments, x402 incl.
  * cross-chain near-intents) with per-call and per-session limits, a merchant allow-list and evidence links.
  * Run it with `nearpay-mcp` (stdio or `--http`) or embed it with `createNearPayMcpServer`.

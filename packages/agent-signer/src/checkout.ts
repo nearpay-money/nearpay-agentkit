@@ -22,7 +22,7 @@ import {
   type PublicCheckoutSession,
   type SignedAttestation,
   type z,
-} from "@nearpay/spec";
+} from "@nearpay-money/spec";
 import { PINNED_SENTINEL_KEYS, type PinnedSentinelKey, verifyAttestation } from "./attestation.js";
 import { AgentSignerError } from "./errors.js";
 import { ApiCallError, callRoute } from "./http.js";
