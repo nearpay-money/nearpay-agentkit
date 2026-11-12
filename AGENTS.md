@@ -1,6 +1,6 @@
 # AGENTS.md — nearpay-agentkit
 
-You are working in **nearpay-agentkit**, one of 27 NearPay repositories (`nearpay-brain/architecture/repositories.md`).
+You are working in **nearpay-agentkit**, one of 26 NearPay repositories (`nearpay-brain/architecture/repositories.md`).
 Scope: Agent payments toolkit: x402 server middleware (Express/Hono/Next) and client, MCP server for agents, NEAR Intents signing helpers.
 
 ## Before changing anything
